@@ -1,4 +1,4 @@
-name: Paseo + Claude Code Docker Publish
+name: Docker Publish
 
 on:
   # 定时检查上游 Paseo 仓库是否有新版本发布
