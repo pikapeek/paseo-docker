@@ -7,9 +7,14 @@ FROM ghcr.io/getpaseo/paseo:latest
 
 USER root
 
-# 安装 Claude Code
+# 安装 Claude Code + GitHub CLI
 RUN npm install -g @anthropic-ai/claude-code && \
     claude --version
+
+# 安装 gh CLI（Paseo clone 需要）
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gh && \
+    rm -rf /var/lib/apt/lists/*
 
 # ---- Claude Code 自定义 API 环境变量 ----
 ENV ANTHROPIC_AUTH_TOKEN=
@@ -22,6 +27,9 @@ ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 
 # 允许任意 Host header（Docker 部署通过宿主机 IP/域名访问时需要）
 ENV PASEO_HOSTNAMES=true
+
+# GitHub Token（gh CLI 鉴权，需从 GitHub Settings 生成）
+ENV GITHUB_TOKEN=
 
 # 保持 root，官方 entrypoint 会自动切换到 paseo 用户运行 daemon
 

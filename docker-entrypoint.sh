@@ -18,6 +18,15 @@ if [ -z "${ANTHROPIC_AUTH_TOKEN:-}" ]; then
     echo "  Set it via: -e ANTHROPIC_AUTH_TOKEN=<your-token>"
 fi
 
+# GitHub Token → git credential helper for paseo user
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+    if gosu paseo gh auth setup-git --hostname github.com 2>/dev/null; then
+        echo "  GitHub:      authenticated"
+    else
+        echo "  GitHub:      auth failed (check GITHUB_TOKEN)"
+    fi
+fi
+
 echo "=============================================="
 echo ""
 
