@@ -42,6 +42,9 @@ RUN if [ "${PASEO_VERSION}" = "latest" ]; then \
 # 创建工作目录
 WORKDIR /workspace
 
+# 创建数据目录
+RUN mkdir -p /home/paseo
+
 # ---- Claude Code 自定义 API 环境变量 ----
 # 自定义 API 端点（默认指向 Anthropic 官方 API）
 ENV ANTHROPIC_BASE_URL=https://api.anthropic.com
@@ -70,7 +73,7 @@ EXPOSE 6767
 
 # 创建非 root 用户（可选，方便权限管理）
 RUN useradd --create-home --shell /bin/bash coder
-RUN chown -R coder:coder /workspace
+RUN chown -R coder:coder /workspace /home/paseo
 
 # 保留 root 用户，通过 entrypoint 切换到 coder 或直接使用
 # 若需要以非 root 运行，可在 docker run 时指定 --user coder
@@ -80,4 +83,4 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["bash"]
+CMD ["sh", "-c", "exec paseo daemon start"]
