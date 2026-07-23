@@ -52,6 +52,8 @@ Dashboard: `http://localhost:6767`
 | `ANTHROPIC_OPUS_MODEL` | Opus 模型 | `claude-opus-4-8` |
 | `ANTHROPIC_SONNET_MODEL` | Sonnet 模型 | `claude-sonnet-4-6` |
 | `ANTHROPIC_HAIKU_MODEL` | Haiku 模型 | `claude-haiku-4-5` |
+| `PASEO_PASSWORD` | Daemon 鉴权密码 | — |
+| `PASEO_HOSTNAMES` | 允许的 Host header（`true` = 全部放行） | `true` |
 
 ## 引用
 

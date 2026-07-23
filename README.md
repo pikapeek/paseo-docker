@@ -52,6 +52,8 @@ Dashboard: `http://localhost:6767`
 | `ANTHROPIC_OPUS_MODEL` | Opus model | `claude-opus-4-8` |
 | `ANTHROPIC_SONNET_MODEL` | Sonnet model | `claude-sonnet-4-6` |
 | `ANTHROPIC_HAIKU_MODEL` | Haiku model | `claude-haiku-4-5` |
+| `PASEO_PASSWORD` | Daemon auth password | — |
+| `PASEO_HOSTNAMES` | Allowed Host headers (`true` = all) | `true` |
 
 ## References
 
