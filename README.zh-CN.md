@@ -23,6 +23,8 @@ docker run -it --rm \
 services:
   paseo:
     image: ghcr.io/pikapeek/paseo:latest
+    container_name: paseo
+    restart: unless-stopped
     ports:
       - "6767:6767"
     environment:
