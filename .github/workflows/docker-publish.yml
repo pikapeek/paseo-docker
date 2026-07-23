@@ -141,8 +141,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            PASEO_VERSION=${{ steps.version.outputs.paseo_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
