@@ -16,8 +16,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends gh && \
     rm -rf /var/lib/apt/lists/*
 
-# ---- Claude Code 自定义 API 环境变量 ----
-ENV ANTHROPIC_AUTH_TOKEN=
+# ---- Claude Code 自定义 API ----
+# 通过 -e 运行时注入: ANTHROPIC_BASE_URL, ANTHROPIC_AUTH_TOKEN, ANTHROPIC_MODEL 等
 ENV ANTHROPIC_BASE_URL=https://api.anthropic.com
 ENV ANTHROPIC_MODEL=claude-sonnet-4-6
 ENV ANTHROPIC_OPUS_MODEL=claude-opus-4-8
@@ -25,11 +25,8 @@ ENV ANTHROPIC_SONNET_MODEL=claude-sonnet-4-6
 ENV ANTHROPIC_HAIKU_MODEL=claude-haiku-4-5
 ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 
-# 允许任意 Host header（Docker 部署通过宿主机 IP/域名访问时需要）
+# 允许任意 Host header
 ENV PASEO_HOSTNAMES=true
-
-# GitHub Token（gh CLI 鉴权，需从 GitHub Settings 生成）
-ENV GITHUB_TOKEN=
 
 # 保持 root，官方 entrypoint 会自动切换到 paseo 用户运行 daemon
 
