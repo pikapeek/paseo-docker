@@ -20,7 +20,9 @@ docker run -d --name paseo \
   -v /data/workspace:/workspace \
   -v /data/paseo:/home/paseo \
   ghcr.io/pikapeek/paseo:latest
+```
 
+```yaml
 # docker compose
 services:
   paseo:
