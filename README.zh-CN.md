@@ -19,7 +19,6 @@ docker run -d --name paseo \
   -e ANTHROPIC_BASE_URL="https://your-api.example.com" \
   -e ANTHROPIC_AUTH_TOKEN="your-key" \
   -e ANTHROPIC_MODEL="your-model" \
-  -v /data/workspace:/workspace \
   -v /data/paseo:/home/paseo \
   ghcr.io/pikapeek/paseo:latest
 ```
@@ -40,7 +39,6 @@ services:
       - ANTHROPIC_AUTH_TOKEN=your-key
       - ANTHROPIC_MODEL=your-model
     volumes:
-      - /data/workspace:/workspace
       - /data/paseo:/home/paseo
 ```
 
