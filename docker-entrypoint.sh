@@ -52,6 +52,7 @@ else
     echo "ANTHROPIC_AUTH_TOKEN is configured."
 fi
 
+echo "  Paseo Dashboard: http://localhost:6767"
 echo ""
 echo "=============================================="
 echo ""

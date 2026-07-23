@@ -12,6 +12,7 @@ docker pull ghcr.io/pikapeek/paseo:latest
 
 # docker run
 docker run -it --rm \
+  -p 6767:6767 \
   -e ANTHROPIC_BASE_URL="https://your-api.example.com" \
   -e ANTHROPIC_AUTH_TOKEN="your-key" \
   -e ANTHROPIC_MODEL="your-model" \
@@ -22,6 +23,8 @@ docker run -it --rm \
 services:
   paseo:
     image: ghcr.io/pikapeek/paseo:latest
+    ports:
+      - "6767:6767"
     environment:
       - ANTHROPIC_BASE_URL=https://your-api.example.com
       - ANTHROPIC_AUTH_TOKEN=your-key
@@ -29,6 +32,8 @@ services:
     volumes:
       - /data/workspace:/workspace
 ```
+
+Dashboard: `http://localhost:6767`
 
 ## Environment Variables
 

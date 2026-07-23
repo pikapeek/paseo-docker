@@ -60,8 +60,13 @@ ENV ANTHROPIC_HAIKU_MODEL=claude-haiku-4-5
 # 禁用遥测和自动更新检查
 ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 
+# Paseo daemon 监听地址（0.0.0.0 允许外部访问 Dashboard）
+ENV PASEO_LISTEN=0.0.0.0:6767
+
 # 记录构建时传入的 Paseo 版本
 ENV PASEO_VERSION=${PASEO_VERSION}
+
+EXPOSE 6767
 
 # 创建非 root 用户（可选，方便权限管理）
 RUN useradd --create-home --shell /bin/bash coder
