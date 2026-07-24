@@ -17,13 +17,13 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # ---- Claude Code 自定义 API ----
-# 通过 -e 运行时注入: ANTHROPIC_BASE_URL, ANTHROPIC_AUTH_TOKEN, ANTHROPIC_MODEL 等
+# 通过 -e 运行时注入: ANTHROPIC_BASE_URL, ANTHROPIC_AUTH_TOKEN 等
 ENV ANTHROPIC_BASE_URL=https://api.anthropic.com
-ENV ANTHROPIC_MODEL=claude-sonnet-4-6
-ENV ANTHROPIC_OPUS_MODEL=claude-opus-4-8
-ENV ANTHROPIC_SONNET_MODEL=claude-sonnet-4-6
-ENV ANTHROPIC_HAIKU_MODEL=claude-haiku-4-5
 ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
+# ---- OpenSpec ----
+RUN npm install -g @fission-ai/openspec@latest && \
+    openspec --version
 
 # 允许任意 Host header
 ENV PASEO_HOSTNAMES=true

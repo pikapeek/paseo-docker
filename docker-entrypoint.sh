@@ -7,6 +7,7 @@ echo "  Paseo + Claude Code"
 echo "=============================================="
 echo "  Paseo:       $(paseo --version 2>&1 || echo 'N/A')"
 echo "  Claude Code: $(claude --version 2>&1 || echo 'N/A')"
+echo "  OpenSpec:    $(openspec --version 2>&1 || echo 'N/A')"
 
 if [ -n "${ANTHROPIC_BASE_URL:-}" ] && [ "${ANTHROPIC_BASE_URL}" != "https://api.anthropic.com" ]; then
     echo "  API:         ${ANTHROPIC_BASE_URL}"

@@ -1,6 +1,6 @@
 # Paseo + Claude Code
 
-Pre-installed [Paseo](https://github.com/getpaseo/paseo) + [Claude Code](https://github.com/anthropics/claude-code) Docker image with custom API support.
+Pre-installed [Paseo](https://github.com/getpaseo/paseo) + [Claude Code](https://github.com/anthropics/claude-code) + [OpenSpec](https://github.com/Fission-AI/OpenSpec) Docker image with custom API support.
 
 [中文说明](README.zh-CN.md)
 
@@ -18,7 +18,6 @@ docker run -d --name paseo \
   -e GITHUB_TOKEN="ghp_xxx" \
   -e ANTHROPIC_BASE_URL="https://your-api.example.com" \
   -e ANTHROPIC_AUTH_TOKEN="your-key" \
-  -e ANTHROPIC_MODEL="your-model" \
   -v /data/paseo:/home/paseo \
   ghcr.io/pikapeek/paseo:latest
 ```
@@ -37,7 +36,6 @@ services:
       - GITHUB_TOKEN=ghp_xxx
       - ANTHROPIC_BASE_URL=https://your-api.example.com
       - ANTHROPIC_AUTH_TOKEN=your-key
-      - ANTHROPIC_MODEL=your-model
     volumes:
       - /data/paseo:/home/paseo
 ```
@@ -58,15 +56,12 @@ Set `Repository access: All repositories` and grant `Contents: Read-only`. Copy 
 |----------|-------------|---------|
 | `PASEO_PASSWORD` | Daemon auth password | — |
 | `GITHUB_TOKEN` | GitHub token for `gh` CLI | — |
-| `ANTHROPIC_AUTH_TOKEN` | API Key (**required**) | — |
 | `ANTHROPIC_BASE_URL` | Custom API endpoint | `https://api.anthropic.com` |
-| `ANTHROPIC_MODEL` | Default model | `claude-sonnet-4-6` |
-| `ANTHROPIC_OPUS_MODEL` | Opus model | `claude-opus-4-8` |
-| `ANTHROPIC_SONNET_MODEL` | Sonnet model | `claude-sonnet-4-6` |
-| `ANTHROPIC_HAIKU_MODEL` | Haiku model | `claude-haiku-4-5` |
+| `ANTHROPIC_AUTH_TOKEN` | API Key (**required**) | — |
 | `PASEO_HOSTNAMES` | Allowed Host headers (`true` = all) | `true` |
 
 ## References
 
 - [getpaseo/paseo](https://github.com/getpaseo/paseo) — Multi-agent orchestration CLI
 - [anthropics/claude-code](https://github.com/anthropics/claude-code) — Anthropic official AI coding assistant
+- [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) — AI-native spec-driven development
