@@ -60,6 +60,21 @@ Set `Repository access: All repositories` and grant `Contents: Read-only`. Copy 
 | `ANTHROPIC_AUTH_TOKEN` | API Key (**required**) | — |
 | `PASEO_HOSTNAMES` | Allowed Host headers (`true` = all) | `true` |
 
+## OpenSpec
+
+[OpenSpec](https://github.com/Fission-AI/OpenSpec) is pre-installed. Use it in your project to enable spec-driven development with AI assistants.
+
+```bash
+# Initialize in your project directory
+openspec init
+
+# Then use slash commands in Claude Code:
+# /opsx:explore     — explore and plan before writing code
+# /opsx:propose     — propose a structured change
+# /opsx:apply       — implement planned tasks
+# /opsx:archive     — archive completed changes
+```
+
 ## References
 
 - [getpaseo/paseo](https://github.com/getpaseo/paseo) — Multi-agent orchestration CLI

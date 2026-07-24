@@ -60,6 +60,21 @@ Web UI 连接时输入 `PASEO_PASSWORD`。
 | `ANTHROPIC_AUTH_TOKEN` | API Key（**必需**） | — |
 | `PASEO_HOSTNAMES` | 允许的 Host header（`true` = 全部放行） | `true` |
 
+## OpenSpec
+
+[OpenSpec](https://github.com/Fission-AI/OpenSpec) 已预装。在项目中使用它实现 Spec 驱动的 AI 开发：
+
+```bash
+# 在项目目录初始化
+openspec init
+
+# 然后在 Claude Code 中使用 slash 命令：
+# /opsx:explore     — 探索分析，先规划再写代码
+# /opsx:propose     — 提出变更方案
+# /opsx:apply       — 执行计划任务
+# /opsx:archive     — 归档已完成变更
+```
+
 ## 引用
 
 - [getpaseo/paseo](https://github.com/getpaseo/paseo) — 多 Agent 编排 CLI
