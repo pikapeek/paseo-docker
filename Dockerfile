@@ -11,10 +11,11 @@ USER root
 RUN npm install -g @anthropic-ai/claude-code && \
     claude --version
 
-# 安装 gh CLI（Paseo clone 需要）
+# 安装 gh CLI（Paseo clone 需要）+ sudo
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gh && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends gh sudo && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo "paseo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/paseo
 
 # ---- Claude Code 自定义 API ----
 # 通过 -e 运行时注入: ANTHROPIC_BASE_URL, ANTHROPIC_AUTH_TOKEN 等
