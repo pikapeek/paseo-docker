@@ -135,6 +135,7 @@ openspec init
 | `CODEX_BASE_URL` | Codex API 端点 | — |
 | `OPENCODE_API_KEY` | OpenCode API key（独立） | — |
 | `OPENCODE_BASE_URL` | OpenCode API 端点 | — |
+| `OPENCODE_PROVIDER` | OpenCode provider id（`openai` 或 `anthropic`） | `openai` |
 | `GITHUB_TOKEN` | GitHub Token（`gh` CLI 鉴权） | — |
 | `PASEO_HOSTNAMES` | 允许的 Host header（`true` = 全部放行） | `true` |
 

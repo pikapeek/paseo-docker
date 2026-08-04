@@ -132,7 +132,11 @@ configure_claude() {
     if [[ -n "$base" ]]; then
       printf '    "ANTHROPIC_BASE_URL": "%s",\n' "$base"
     fi
-    printf '    "ANTHROPIC_AUTH_TOKEN": "%s"\n' "$tok"
+    # Both keys written: Claude Code reads ANTHROPIC_API_KEY for official
+    # auth, ANTHROPIC_AUTH_TOKEN for custom-gateway/proxy auth. Writing both
+    # covers either endpoint type.
+    printf '    "ANTHROPIC_AUTH_TOKEN": "%s",\n' "$tok"
+    printf '    "ANTHROPIC_API_KEY": "%s"\n' "$tok"
     printf '  }\n}\n'
   } > "$cfg"
   own_as_paseo "$dir"
@@ -151,9 +155,12 @@ configure_codex() {
   local base="${CODEX_BASE_URL:-}"
   [[ -n "$key" ]] || return 0
   mkdir -p "$dir"
+  # Default to official OpenAI endpoint when no custom base URL is set.
+  if [[ -z "$base" ]]; then
+    base="https://api.openai.com/v1"
+  fi
   {
-    if [[ -n "$base" ]]; then
-      cat <<EOF
+    cat <<EOF
 model_provider = "custom"
 
 [model_providers.custom]
@@ -162,9 +169,6 @@ base_url = "${base}"
 wire_api = "chat"
 env_key = "CODEX_API_KEY"
 EOF
-    else
-      echo 'model_provider = "openai"'
-    fi
   } > "$cfg"
   own_as_paseo "$dir"
   ok "codex-config" "wrote $cfg"
@@ -182,28 +186,30 @@ configure_opencode() {
   local auth="$data/auth.json"
   local key="${OPENCODE_API_KEY:-}"
   local base="${OPENCODE_BASE_URL:-}"
+  local provider="${OPENCODE_PROVIDER:-openai}"
   [[ -n "$key" ]] || return 0
   mkdir -p "$data"
-  # auth.json — keyed by provider id. Defaults to `openai`; a base URL
-  # pointing at an anthropic endpoint switches the id to `anthropic`.
-  local provider="openai"
-  if [[ "$base" == *"anthropic"* ]]; then
-    provider="anthropic"
-  fi
+  # auth.json — keyed by provider id. OPENCODE_PROVIDER controls which
+  # provider the key is stored under (default: openai). Set to "anthropic"
+  # if you connect to an Anthropic-compatible endpoint.
   {
     printf '{\n  "%s": {\n    "type": "api",\n    "key": "%s"\n  }\n}\n' \
       "$provider" "$key"
   } > "$auth"
   chmod 600 "$auth"
-  # opencode.json — point the provider at the custom base URL.
+  own_as_paseo "$data"
+  # opencode.json — global config dir is $XDG_CONFIG_HOME/opencode
+  # (base image sets XDG_CONFIG_HOME=/home/paseo/.config). Provider baseURL
+  # lives in the `provider` table here.
   if [[ -n "$base" ]]; then
-    local cfg="${PASEO_HOME}/opencode.json"
+    local cfgdir="${XDG_CONFIG_HOME:-${PASEO_HOME}/.config}/opencode"
+    mkdir -p "$cfgdir"
+    local cfg="$cfgdir/opencode.json"
     printf '{\n  "provider": {\n    "%s": {\n      "options": {\n        "baseURL": "%s"\n      }\n    }\n  }\n}\n' \
       "$provider" "$base" > "$cfg"
-    own_as_paseo "${PASEO_HOME}/opencode.json"
+    own_as_paseo "$cfgdir"
     ok "opencode-config" "wrote auth.json + opencode.json ($provider)"
   else
-    own_as_paseo "$data"
     ok "opencode-config" "wrote auth.json ($provider)"
   fi
 }

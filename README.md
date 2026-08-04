@@ -144,6 +144,7 @@ openspec init
 | `CODEX_BASE_URL` | Codex API endpoint | — |
 | `OPENCODE_API_KEY` | OpenCode API key (independent) | — |
 | `OPENCODE_BASE_URL` | OpenCode API endpoint | — |
+| `OPENCODE_PROVIDER` | OpenCode provider id (`openai` or `anthropic`) | `openai` |
 | `GITHUB_TOKEN` | GitHub token for `gh` CLI | — |
 | `PASEO_HOSTNAMES` | Allowed Host headers (`true` = all) | `true` |
 
