@@ -132,10 +132,6 @@ configure_claude() {
     if [[ -n "$base" ]]; then
       printf '    "ANTHROPIC_BASE_URL": "%s",\n' "$base"
     fi
-    # Both keys written: Claude Code reads ANTHROPIC_API_KEY for official
-    # auth, ANTHROPIC_AUTH_TOKEN for custom-gateway/proxy auth. Writing both
-    # covers either endpoint type.
-    printf '    "ANTHROPIC_AUTH_TOKEN": "%s",\n' "$tok"
     printf '    "ANTHROPIC_API_KEY": "%s"\n' "$tok"
     printf '  }\n}\n'
   } > "$cfg"
