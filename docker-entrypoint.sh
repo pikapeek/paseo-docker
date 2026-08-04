@@ -30,6 +30,20 @@ if [[ -x /usr/local/go/bin/go ]]; then
   export PATH="/usr/local/go/bin:$PATH"
 fi
 
+# Export per-tool API vars so the daemon (and any agent it spawns) inherit
+# them. Codex's config.toml references CODEX_API_KEY by name via env_key, so
+# it MUST be in the environment. Claude/OpenCode read their config files
+# directly, but exporting is harmless and keeps agents consistent.
+if [[ -n "${CODEX_API_KEY:-}" ]]; then
+  export CODEX_API_KEY
+fi
+if [[ -n "${CLAUDE_API_KEY:-}" ]]; then
+  export CLAUDE_API_KEY
+fi
+if [[ -n "${OPENCODE_API_KEY:-}" ]]; then
+  export OPENCODE_API_KEY
+fi
+
 echo "=============================================="
 probe "Paseo"       paseo
 probe "Claude Code" claude
@@ -40,14 +54,10 @@ probe "Go"          go
 probe "gh"          gh
 echo "=============================================="
 
-if [ -n "${ANTHROPIC_BASE_URL:-}" ] && [ "${ANTHROPIC_BASE_URL}" != "https://api.anthropic.com" ]; then
-    echo "  API:         ${ANTHROPIC_BASE_URL}"
-fi
-
-if [ -z "${ANTHROPIC_AUTH_TOKEN:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-    echo "  ---"
-    echo "  WARNING: no Anthropic API key is set!"
-    echo "  Set it via: -e ANTHROPIC_AUTH_TOKEN=<your-token>"
+if [ -n "${CLAUDE_API_KEY:-}" ] || [ -n "${CODEX_API_KEY:-}" ] || [ -n "${OPENCODE_API_KEY:-}" ]; then
+    echo "  API keys:    claude=${CLAUDE_API_KEY:+set} codex=${CODEX_API_KEY:+set} opencode=${OPENCODE_API_KEY:+set}"
+else
+    echo "  WARNING: no API keys set (CLAUDE_API_KEY / CODEX_API_KEY / OPENCODE_API_KEY)"
 fi
 
 # GitHub token -> gh credential helper for the paseo user.

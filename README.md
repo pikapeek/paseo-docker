@@ -24,8 +24,8 @@ docker run -d --name paseo \
   -p 6767:6767 \
   -e PASEO_PASSWORD="change-me" \
   -e INSTALL_CLAUDE=true \
-  -e ANTHROPIC_AUTH_TOKEN="your-key" \
-  -e ANTHROPIC_BASE_URL="https://your-api.example.com" \
+  -e CLAUDE_API_KEY="your-key" \
+  -e CLAUDE_BASE_URL="https://your-api.example.com" \
   -e INSTALL_GO=true \
   -e GO_VERSION="1.26.5" \
   -v /data/paseo:/home/paseo \
@@ -50,10 +50,12 @@ services:
       - INSTALL_OPENCODE=true
       - INSTALL_GO=true
       - INSTALL_GH=true
-      - ANTHROPIC_AUTH_TOKEN=your-key
-      - ANTHROPIC_BASE_URL=https://your-api.example.com
-      - OPENAI_API_KEY=sk-xxx
-      - OPENAI_BASE_URL=https://your-api.example.com/v1
+      - CLAUDE_API_KEY=your-claude-key
+      - CLAUDE_BASE_URL=https://your-claude-api.example.com
+      - CODEX_API_KEY=sk-codex-xxx
+      - CODEX_BASE_URL=https://your-codex-api.example.com/v1
+      - OPENCODE_API_KEY=sk-opencode-xxx
+      - OPENCODE_BASE_URL=https://your-opencode-api.example.com
     volumes:
       - /data/paseo:/home/paseo
 ```
@@ -85,15 +87,16 @@ paseo's daemon requires it, so it is not separately selectable.
 
 ### API credentials
 
-When a tool that needs an API key is installed, its credentials are read from
-standard environment variables and written into the tool's config file (owned
-by the `paseo` user), so the agent works immediately:
+Each AI tool is configured **independently** with its own key + base URL
+(no shared variables). When a tool is installed, its credentials are written
+into the tool's config file (owned by the `paseo` user), so the agent works
+immediately:
 
-| Tool | Config file | Key var(s) | Base URL var |
-|------|------------|------------|--------------|
-| Claude Code | `~/.claude/settings.json` | `ANTHROPIC_AUTH_TOKEN` (or `ANTHROPIC_API_KEY`) | `ANTHROPIC_BASE_URL` |
-| Codex | `~/.codex/config.toml` | `OPENAI_API_KEY` | `OPENAI_BASE_URL` |
-| OpenCode | `~/.local/share/opencode/auth.json` | `OPENAI_API_KEY` / `ANTHROPIC_AUTH_TOKEN` | `OPENAI_BASE_URL` / `ANTHROPIC_BASE_URL` |
+| Tool | Config file | Key var | Base URL var |
+|------|------------|---------|--------------|
+| Claude Code | `~/.claude/settings.json` | `CLAUDE_API_KEY` | `CLAUDE_BASE_URL` |
+| Codex | `~/.codex/config.toml` | `CODEX_API_KEY` | `CODEX_BASE_URL` |
+| OpenCode | `~/.local/share/opencode/auth.json` | `OPENCODE_API_KEY` | `OPENCODE_BASE_URL` |
 
 If a tool is installed without its API key, it still installs; it simply isn't
 configured until you set the variable and restart.
@@ -135,11 +138,12 @@ openspec init
 | `CODEX_VERSION` | Version pin for Codex | `latest` |
 | `OPENCODE_VERSION` | Version pin for OpenCode | `latest` |
 | `GO_VERSION` | Version pin for Go (e.g. `1.26.5`) | `1.26.5` |
-| `ANTHROPIC_AUTH_TOKEN` | Claude Code API key | — |
-| `ANTHROPIC_API_KEY` | Alternative Claude Code API key | — |
-| `ANTHROPIC_BASE_URL` | Claude Code API endpoint | `https://api.anthropic.com` |
-| `OPENAI_API_KEY` | Codex / OpenCode API key | — |
-| `OPENAI_BASE_URL` | Codex / OpenCode API endpoint | — |
+| `CLAUDE_API_KEY` | Claude Code API key (independent) | — |
+| `CLAUDE_BASE_URL` | Claude Code API endpoint | `https://api.anthropic.com` |
+| `CODEX_API_KEY` | Codex API key (independent) | — |
+| `CODEX_BASE_URL` | Codex API endpoint | — |
+| `OPENCODE_API_KEY` | OpenCode API key (independent) | — |
+| `OPENCODE_BASE_URL` | OpenCode API endpoint | — |
 | `GITHUB_TOKEN` | GitHub token for `gh` CLI | — |
 | `PASEO_HOSTNAMES` | Allowed Host headers (`true` = all) | `true` |
 

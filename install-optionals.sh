@@ -116,21 +116,17 @@ install_gh() {
 }
 
 # ---- Claude Code API config (~/.claude/settings.json) ----
-# Inherits the container's ANTHROPIC_BASE_URL / ANTHROPIC_AUTH_TOKEN /
-# ANTHROPIC_API_KEY so a runtime-installed claude can talk to a custom
-# endpoint (or the official API) without manual setup.
+# Uses CLAUDE_API_KEY + CLAUDE_BASE_URL (per-tool, independent). Values are
+# written directly into settings.json so a runtime-installed claude works
+# without any exported env vars.
 configure_claude() {
   have claude || return 0
   local dir="${PASEO_HOME}/.claude"
   local cfg="$dir/settings.json"
-  local base="${ANTHROPIC_BASE_URL:-}"
-  local tok="${ANTHROPIC_AUTH_TOKEN:-${ANTHROPIC_API_KEY:-}}"
+  local base="${CLAUDE_BASE_URL:-}"
+  local tok="${CLAUDE_API_KEY:-}"
   [[ -n "$tok" ]] || return 0
   mkdir -p "$dir"
-  if [[ -f "$cfg" ]]; then
-    # Preserve an existing settings.json; merge the env block.
-    cp "$cfg" "$cfg.tmp" 2>/dev/null || true
-  fi
   {
     printf '{\n  "env": {\n'
     if [[ -n "$base" ]]; then
@@ -144,16 +140,15 @@ configure_claude() {
 }
 
 # ---- Codex CLI API config (~/.codex/config.toml) ----
-# Uses OPENAI_API_KEY + OPENAI_BASE_URL; writes a custom model_provider so
-# Codex points at the intended endpoint. Keeps the official `openai` provider
-# untouched; only the `model_provider` default is redirected when a base URL
-# is supplied.
+# Uses CODEX_API_KEY + CODEX_BASE_URL (per-tool, independent). Codex's
+# config.toml references the API key by env var name via `env_key`, so the
+# entrypoint must also export CODEX_API_KEY (see docker-entrypoint.sh).
 configure_codex() {
   have codex || return 0
   local dir="${PASEO_HOME}/.codex"
   local cfg="$dir/config.toml"
-  local key="${OPENAI_API_KEY:-}"
-  local base="${OPENAI_BASE_URL:-}"
+  local key="${CODEX_API_KEY:-}"
+  local base="${CODEX_BASE_URL:-}"
   [[ -n "$key" ]] || return 0
   mkdir -p "$dir"
   {
@@ -165,7 +160,7 @@ model_provider = "custom"
 name = "custom"
 base_url = "${base}"
 wire_api = "chat"
-env_key = "OPENAI_API_KEY"
+env_key = "CODEX_API_KEY"
 EOF
     else
       echo 'model_provider = "openai"'
@@ -176,33 +171,32 @@ EOF
 }
 
 # ---- OpenCode API config (auth.json + opencode.json) ----
+# Uses OPENCODE_API_KEY + OPENCODE_BASE_URL (per-tool, independent).
 # auth.json stores `{ "<provider-id>": { "type": "api", "key": "..." } }`
 # under ~/.local/share/opencode. baseURL is configured via the provider
-# table in opencode.json (provider.<name>.options.baseURL).
+# table in opencode.json (provider.<name>.options.baseURL). The key value is
+# written directly into auth.json (no exported env needed).
 configure_opencode() {
   have opencode || return 0
   local data="${PASEO_HOME}/.local/share/opencode"
   local auth="$data/auth.json"
-  local key="${OPENAI_API_KEY:-}"
+  local key="${OPENCODE_API_KEY:-}"
+  local base="${OPENCODE_BASE_URL:-}"
   [[ -n "$key" ]] || return 0
   mkdir -p "$data"
-  # auth.json — provider id keyed by the API family actually configured.
+  # auth.json — keyed by provider id. Defaults to `openai`; a base URL
+  # pointing at an anthropic endpoint switches the id to `anthropic`.
+  local provider="openai"
+  if [[ "$base" == *"anthropic"* ]]; then
+    provider="anthropic"
+  fi
   {
-    if [[ -n "${ANTHROPIC_AUTH_TOKEN:-${ANTHROPIC_API_KEY:-}}" ]]; then
-      printf '{\n  "anthropic": {\n    "type": "api",\n    "key": "%s"\n  }\n}\n' \
-        "${ANTHROPIC_AUTH_TOKEN:-${ANTHROPIC_API_KEY}}"
-    else
-      printf '{\n  "openai": {\n    "type": "api",\n    "key": "%s"\n  }\n}\n' "$key"
-    fi
+    printf '{\n  "%s": {\n    "type": "api",\n    "key": "%s"\n  }\n}\n' \
+      "$provider" "$key"
   } > "$auth"
   chmod 600 "$auth"
-  # opencode.json — point the matching provider at the custom base URL.
-  local base="${OPENAI_BASE_URL:-${ANTHROPIC_BASE_URL:-}}"
+  # opencode.json — point the provider at the custom base URL.
   if [[ -n "$base" ]]; then
-    local provider="openai"
-    if [[ -n "${ANTHROPIC_AUTH_TOKEN:-${ANTHROPIC_API_KEY:-}}" ]]; then
-      provider="anthropic"
-    fi
     local cfg="${PASEO_HOME}/opencode.json"
     printf '{\n  "provider": {\n    "%s": {\n      "options": {\n        "baseURL": "%s"\n      }\n    }\n  }\n}\n' \
       "$provider" "$base" > "$cfg"
@@ -210,7 +204,7 @@ configure_opencode() {
     ok "opencode-config" "wrote auth.json + opencode.json ($provider)"
   else
     own_as_paseo "$data"
-    ok "opencode-config" "wrote auth.json"
+    ok "opencode-config" "wrote auth.json ($provider)"
   fi
 }
 

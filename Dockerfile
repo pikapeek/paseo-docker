@@ -25,10 +25,12 @@ ENV CODEX_VERSION="latest"
 ENV OPENCODE_VERSION="latest"
 ENV GO_VERSION="1.26.5"
 
-# ---- Claude Code custom API ----
-# Always exported (even when Claude Code is not installed) so a
-# runtime-installed Claude Code inherits them. Runtime overrides via -e.
-ENV ANTHROPIC_BASE_URL=https://api.anthropic.com
+# ---- Per-tool API credentials (independent) ----
+# Each AI tool is configured with its own key + base URL. Version pins above
+# select the version; the *_BASE_URL / *_API_KEY vars configure it.
+ENV CLAUDE_BASE_URL="https://api.anthropic.com"
+ENV CODEX_BASE_URL=""
+ENV OPENCODE_BASE_URL=""
 ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 
 # Allow any Host header

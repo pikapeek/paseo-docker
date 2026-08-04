@@ -24,8 +24,8 @@ docker run -d --name paseo \
   -p 6767:6767 \
   -e PASEO_PASSWORD="change-me" \
   -e INSTALL_CLAUDE=true \
-  -e ANTHROPIC_AUTH_TOKEN="your-key" \
-  -e ANTHROPIC_BASE_URL="https://your-api.example.com" \
+  -e CLAUDE_API_KEY="your-key" \
+  -e CLAUDE_BASE_URL="https://your-api.example.com" \
   -e INSTALL_GO=true \
   -e GO_VERSION="1.26.5" \
   -v /data/paseo:/home/paseo \
@@ -50,10 +50,12 @@ services:
       - INSTALL_OPENCODE=true
       - INSTALL_GO=true
       - INSTALL_GH=true
-      - ANTHROPIC_AUTH_TOKEN=your-key
-      - ANTHROPIC_BASE_URL=https://your-api.example.com
-      - OPENAI_API_KEY=sk-xxx
-      - OPENAI_BASE_URL=https://your-api.example.com/v1
+      - CLAUDE_API_KEY=your-claude-key
+      - CLAUDE_BASE_URL=https://your-claude-api.example.com
+      - CODEX_API_KEY=sk-codex-xxx
+      - CODEX_BASE_URL=https://your-codex-api.example.com/v1
+      - OPENCODE_API_KEY=sk-opencode-xxx
+      - OPENCODE_BASE_URL=https://your-opencode-api.example.com
     volumes:
       - /data/paseo:/home/paseo
 ```
@@ -79,13 +81,14 @@ Web UI 连接时输入 `PASEO_PASSWORD`。
 
 ### API 凭据
 
-安装需要 API key 的工具时，会从标准环境变量读取凭据并写入该工具的配置文件（属主为 `paseo` 用户），agent 开箱即用：
+每个 AI 工具**独立配置**，各自有独立的 key + base URL（无共享变量）。
+安装时自动将凭据写入该工具的配置文件（属主为 `paseo` 用户），agent 开箱即用：
 
 | 工具 | 配置文件 | Key 变量 | Base URL 变量 |
 |------|---------|---------|--------------|
-| Claude Code | `~/.claude/settings.json` | `ANTHROPIC_AUTH_TOKEN`（或 `ANTHROPIC_API_KEY`） | `ANTHROPIC_BASE_URL` |
-| Codex | `~/.codex/config.toml` | `OPENAI_API_KEY` | `OPENAI_BASE_URL` |
-| OpenCode | `~/.local/share/opencode/auth.json` | `OPENAI_API_KEY` / `ANTHROPIC_AUTH_TOKEN` | `OPENAI_BASE_URL` / `ANTHROPIC_BASE_URL` |
+| Claude Code | `~/.claude/settings.json` | `CLAUDE_API_KEY` | `CLAUDE_BASE_URL` |
+| Codex | `~/.codex/config.toml` | `CODEX_API_KEY` | `CODEX_BASE_URL` |
+| OpenCode | `~/.local/share/opencode/auth.json` | `OPENCODE_API_KEY` | `OPENCODE_BASE_URL` |
 
 如果工具安装了但没设 API key，工具仍会装上，只是暂时未配置；设好变量并重启容器后即生效。
 
@@ -126,11 +129,12 @@ openspec init
 | `CODEX_VERSION` | Codex 版本锁定 | `latest` |
 | `OPENCODE_VERSION` | OpenCode 版本锁定 | `latest` |
 | `GO_VERSION` | Go 版本锁定（如 `1.26.5`） | `1.26.5` |
-| `ANTHROPIC_AUTH_TOKEN` | Claude Code API key | — |
-| `ANTHROPIC_API_KEY` | Claude Code API key（备选） | — |
-| `ANTHROPIC_BASE_URL` | Claude Code API 端点 | `https://api.anthropic.com` |
-| `OPENAI_API_KEY` | Codex / OpenCode API key | — |
-| `OPENAI_BASE_URL` | Codex / OpenCode API 端点 | — |
+| `CLAUDE_API_KEY` | Claude Code API key（独立） | — |
+| `CLAUDE_BASE_URL` | Claude Code API 端点 | `https://api.anthropic.com` |
+| `CODEX_API_KEY` | Codex API key（独立） | — |
+| `CODEX_BASE_URL` | Codex API 端点 | — |
+| `OPENCODE_API_KEY` | OpenCode API key（独立） | — |
+| `OPENCODE_BASE_URL` | OpenCode API 端点 | — |
 | `GITHUB_TOKEN` | GitHub Token（`gh` CLI 鉴权） | — |
 | `PASEO_HOSTNAMES` | 允许的 Host header（`true` = 全部放行） | `true` |
 
