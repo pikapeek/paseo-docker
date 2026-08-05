@@ -81,4 +81,8 @@ fi
 echo "=============================================="
 echo ""
 
+# Ensure npm global bin is in PATH before handing off to daemon.
+# gosu preserves PATH, but Paseo agent spawns may not inherit it.
+export PATH="/usr/local/bin:${PATH}"
+
 exec /usr/bin/tini -- /usr/local/bin/paseo-docker-entrypoint "$@"

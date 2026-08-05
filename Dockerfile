@@ -59,5 +59,6 @@ RUN apt-get update && \
     echo "paseo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/paseo && \
     chmod 440 /etc/sudoers.d/paseo && \
     chmod +x /usr/local/bin/paseo-cc-entrypoint.sh \
-             /usr/local/bin/install-optionals.sh
+             /usr/local/bin/install-optionals.sh && \
+    npm config set prefix /usr/local
 ENTRYPOINT ["/usr/local/bin/paseo-cc-entrypoint.sh"]
