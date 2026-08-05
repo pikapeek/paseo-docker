@@ -1,20 +1,6 @@
 name: Docker Publish
 
 on:
-  # ---- 自动：每天检查 Paseo 新版本 + 项目文件变更 ----
-  schedule:
-    - cron: '17 2 * * *'          # UTC 02:17（避开整点高峰）
-  push:
-    branches:
-      - main                      # 主分支有变更就构建
-    paths:
-      - 'Dockerfile'
-      - 'docker-entrypoint.sh'
-      - 'install-optionals.sh'
-      - 'docker-compose.yml'
-      - '.dockerignore'
-      - '.github/workflows/docker-publish.yml'
-  # ---- 手动：指定版本 / 强制重建 ----
   workflow_dispatch:
     inputs:
       paseo_version:

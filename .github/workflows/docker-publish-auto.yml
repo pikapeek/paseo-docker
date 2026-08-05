@@ -1,0 +1,111 @@
+name: Auto Publish (Paseo Release Watch)
+
+on:
+  schedule:
+    - cron: '17 2 * * *'          # 每天 UTC 02:17 检查一次
+  workflow_dispatch:               # 也可以手动触发
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: pikapeek/paseo
+
+jobs:
+  check-and-build:
+    name: Check latest Paseo → Build if needed
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get latest Paseo release
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '::group::查询 Paseo 最新 release'
+
+          JSON="$(curl -sSf --retry 2 --connect-timeout 15 \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            'https://api.github.com/repos/getpaseo/paseo/releases/latest')"
+          VER="$(echo "${JSON}" | jq -r '.tag_name')"
+
+          if [[ -z "${VER}" || "${VER}" == 'null' ]]; then
+            echo '::error::无法获取 Paseo 最新版本'
+            exit 1
+          fi
+
+          echo "version=${VER}" >> "${GITHUB_OUTPUT}"
+          echo "  → 最新 Paseo: ${VER}"
+          echo "::endgroup::"
+          echo "::notice title=Paseo latest::${VER}"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if image already exists
+        id: check
+        shell: bash
+        run: |
+          VER='${{ steps.resolve.outputs.version }}'
+          TAG="${REGISTRY}/${IMAGE}:${VER}"
+
+          echo "  → 检查镜像: ${TAG}"
+          if docker manifest inspect "${TAG}" &>/dev/null; then
+            echo "::notice::镜像已存在，跳过 — ${TAG}"
+            echo 'should_build=false' >> "${GITHUB_OUTPUT}"
+          else
+            echo "::notice::新版本！将构建 — ${TAG}"
+            echo 'should_build=true' >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Setup Buildx
+        if: steps.check.outputs.should_build == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate tags
+        if: steps.check.outputs.should_build == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.resolve.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build & Push
+        if: steps.check.outputs.should_build == 'true'
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          VER='${{ steps.resolve.outputs.version }}'
+          BUILD='${{ steps.check.outputs.should_build || 'false' }}'
+          FULL="${REGISTRY}/${IMAGE}"
+
+          if [[ "${BUILD}" == 'true' ]]; then
+            echo "## 🚀 已发布 \`${FULL}:${VER}\`" >> "${GITHUB_STEP_SUMMARY}"
+            echo "→ \`docker pull ${FULL}:${VER}\`" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "## ⚡ 已跳过 — \`${FULL}:${VER}\` 已存在" >> "${GITHUB_STEP_SUMMARY}"
+          fi
