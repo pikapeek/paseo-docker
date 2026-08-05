@@ -1,105 +1,134 @@
-name: Docker Publish
+name: Build & Publish Docker Image
 
 on:
+  # ---- 自动：每天检查 Paseo 新版本 + 项目文件变更 ----
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '17 2 * * *'          # UTC 02:17（避开整点高峰）
+  push:
+    branches:
+      - main                      # 主分支有变更就构建
+    paths:
+      - 'Dockerfile'
+      - 'docker-entrypoint.sh'
+      - 'install-optionals.sh'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.github/workflows/docker-publish.yml'
+  # ---- 手动：指定版本 / 强制重建 ----
   workflow_dispatch:
     inputs:
       paseo_version:
-        description: 'Paseo version (e.g. v0.1.107). Leave empty to auto-detect.'
+        description: 'Paseo 版本（留空 = 自动取最新 release）'
         required: false
         default: ''
       force_rebuild:
-        description: 'Force rebuild even if version unchanged?'
+        description: '跳过去重检查，强制构建'
         required: false
         default: false
         type: boolean
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: pikapeek/paseo
+  IMAGE: pikapeek/paseo
 
 jobs:
-  build:
-    name: '🔧 Paseo + Claude Code'
+  publish:
+    name: Build → Push → Summary
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: '📥 Checkout'
+      # ============================================================
+      # Phase 1: 检出 + 确定 Paseo 版本
+      # ============================================================
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: '🔍 Resolve Paseo version'
-        id: fetch
+      - name: Resolve Paseo version
+        id: version
         shell: bash
         run: |
           set -euo pipefail
-          echo "::group::Resolving Paseo version"
-          MANUAL_VERSION="${{ github.event.inputs.paseo_version || '' }}"
-          if [[ -n "${MANUAL_VERSION}" ]]; then
-            VERSION="${MANUAL_VERSION}"
-            echo "::notice title=Paseo Version::Manually specified: ${VERSION}"
+          echo '::group::解析 Paseo 版本'
+          MANUAL='${{ github.event.inputs.paseo_version || "" }}'
+
+          if [[ -n "${MANUAL}" ]]; then
+            VER="${MANUAL}"
+            echo "::notice::手动指定: ${VER}"
           else
-            API_URL="https://api.github.com/repos/getpaseo/paseo/releases/latest"
-            echo "  ↳ GET ${API_URL}"
-            RELEASE_JSON=$(curl -sSf -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "${API_URL}")
-            VERSION=$(echo "${RELEASE_JSON}" | jq -r '.tag_name')
-            if [[ -z "${VERSION}" || "${VERSION}" == "null" ]]; then
-              echo "::error title=API Error::Failed to fetch latest Paseo release"
+            echo '  → 查询 GitHub API: getpaseo/paseo/releases/latest'
+            JSON="$(curl -sSf --retry 2 --connect-timeout 15 \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              'https://api.github.com/repos/getpaseo/paseo/releases/latest')"
+            VER="$(echo "${JSON}" | jq -r '.tag_name')"
+            if [[ -z "${VER}" || "${VER}" == 'null' ]]; then
+              echo '::error::无法获取 Paseo 最新版本'
               exit 1
             fi
-            echo "  ↳ Latest release: ${VERSION}"
+            echo "  → 最新 release: ${VER}"
           fi
-          echo "paseo_version=${VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "::endgroup::"
 
-      - name: '🔐 Login to GHCR'
+          echo "version=${VER}" >> "${GITHUB_OUTPUT}"
+          echo "::endgroup::"
+          echo "::notice title=Paseo version::${VER}"
+
+      # ============================================================
+      # Phase 2: 去重检查 — 目标镜像标签已存在则跳过
+      # ============================================================
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: '🧪 Check if build is needed'
+      - name: Check if build needed
         id: check
         shell: bash
         run: |
           set -euo pipefail
-          VERSION="${{ steps.fetch.outputs.paseo_version }}"
-          FORCE="${{ github.event.inputs.force_rebuild || 'false' }}"
-          IMAGE="${REGISTRY}/${IMAGE_NAME}:${VERSION}"
-          echo "paseo_version=${VERSION}" >> "${GITHUB_OUTPUT}"
-          if [[ "${FORCE}" == "true" ]]; then
-            echo "::warning title=Force::Skipping dedup check — ${IMAGE}"
-            echo "should_build=true" >> "${GITHUB_OUTPUT}"
+          VER='${{ steps.version.outputs.version }}'
+          FORCE='${{ github.event.inputs.force_rebuild || 'false' }}'
+          TAG="${REGISTRY}/${IMAGE}:${VER}"
+          echo "version=${VER}" >> "${GITHUB_OUTPUT}"
+
+          if [[ "${FORCE}" == 'true' ]]; then
+            echo '::warning::强制重建，跳过去重检查'
+            echo 'should_build=true' >> "${GITHUB_OUTPUT}"
             exit 0
           fi
-          if docker manifest inspect "${IMAGE}" &> /dev/null; then
-            echo "::notice title=Skipped::Already exists — ${IMAGE}"
-            echo "should_build=false" >> "${GITHUB_OUTPUT}"
+
+          echo "  → 检查镜像是否存在: ${TAG}"
+          if docker manifest inspect "${TAG}" &>/dev/null; then
+            echo "::notice::镜像已存在，跳过构建 — ${TAG}"
+            echo 'should_build=false' >> "${GITHUB_OUTPUT}"
           else
-            echo "::notice title=Build::Will publish ${IMAGE}"
-            echo "should_build=true" >> "${GITHUB_OUTPUT}"
+            echo "::notice::将发布新镜像 — ${TAG}"
+            echo 'should_build=true' >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: '🐳 Setup Buildx'
+      # ============================================================
+      # Phase 3: 构建 + 推送
+      # ============================================================
+      - name: Setup Buildx
         if: steps.check.outputs.should_build == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: '🏷  Generate tags'
+      - name: Generate image tags
         if: steps.check.outputs.should_build == 'true'
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
           tags: |
-            type=raw,value=${{ steps.check.outputs.paseo_version }}
+            type=raw,value=${{ steps.check.outputs.version }}
             type=raw,value=latest
 
-      - name: '🚀 Build & Push'
+      - name: Build & Push
         if: steps.check.outputs.should_build == 'true'
         id: build
         uses: docker/build-push-action@v6
@@ -112,20 +141,41 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-      - name: '📋 Summary'
+      # ============================================================
+      # Phase 4: 汇总
+      # ============================================================
+      - name: Summary
         if: always()
         shell: bash
         run: |
-          VERSION="${{ steps.fetch.outputs.paseo_version }}"
-          SHOULD_BUILD="${{ steps.check.outputs.should_build || 'false' }}"
-          IMAGE="${REGISTRY}/${IMAGE_NAME}"
-          if [[ "${SHOULD_BUILD}" == "true" ]]; then
-            echo "### 🚀 Published" >> "${GITHUB_STEP_SUMMARY}"
+          VER='${{ steps.version.outputs.version }}'
+          BUILD='${{ steps.check.outputs.should_build || 'false' }}'
+          FULL="${REGISTRY}/${IMAGE}"
+
+          echo '---'
+
+          if [[ "${BUILD}" == 'true' ]]; then
+            ICON='🚀' STATUS='已发布'
+            DIGEST='${{ steps.build.outputs.digest || '' }}'
           else
-            echo "### ⚡ Skipped" >> "${GITHUB_STEP_SUMMARY}"
+            ICON='⚡' STATUS='已跳过（镜像已存在）'
+            DIGEST='—'
           fi
-          {
-            echo "| Paseo | Image |"
-            echo "| --- | --- |"
-            echo "| \`${VERSION}\` | \`${IMAGE}:${VERSION}\` |"
-          } >> "${GITHUB_STEP_SUMMARY}"
+
+          cat <<EOF >> "${GITHUB_STEP_SUMMARY}"
+          ## ${ICON} ${STATUS}
+
+          | | |
+          |---|---|
+          | **镜像** | \`${FULL}\` |
+          | **Paseo** | \`${VER}\` |
+          | **Tag** | \`${FULL}:${VER}\` |
+          | **Digest** | \`${DIGEST}\` |
+          | **触发方式** | ${{ github.event_name }} |
+          EOF
+
+          if [[ "${BUILD}" == 'true' ]]; then
+            echo "  → 拉取: docker pull ${FULL}:${VER}"
+          else
+            echo "  → 拉取: docker pull ${FULL}:${VER}"
+          fi
