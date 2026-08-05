@@ -1,6 +1,6 @@
 # Paseo + Optional Tools
 
-[Paseo](https://github.com/getpaseo/paseo) with AI coding tools pre-integrated. Starts with just Paseo; install a tool at container startup via an environment variable. Claude Code, Codex, and OpenCode get their API keys and models configured automatically.
+[Paseo](https://github.com/getpaseo/paseo) with optional tools (Claude Code / Codex / OpenCode AI agents, plus OpenSpec / Go / Flutter / GitHub CLI). Starts with just Paseo; install a tool at container startup via an environment variable. AI agents get their API keys and models configured automatically.
 
 [中文说明](README.zh-CN.md)
 

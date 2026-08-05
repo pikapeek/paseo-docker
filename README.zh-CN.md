@@ -1,6 +1,6 @@
 # Paseo + 可选工具
 
-[Paseo](https://github.com/getpaseo/paseo) 预置多款 AI 编程工具。默认只跑 Paseo 本体；需要哪个工具，启动时加环境变量就自动装好。Claude Code、Codex、OpenCode 的 API key 和模型会自动写入配置，装完即用。
+[Paseo](https://github.com/getpaseo/paseo) 预置多种可选工具（Claude Code / Codex / OpenCode 等 AI Agent，以及 OpenSpec / Go / Flutter / GitHub CLI）。默认只跑 Paseo 本体；需要哪个，启动时加环境变量就自动装好。AI Agent 的 API key 和模型会自动写入配置，装完即用。
 
 [English](README.md)
 
@@ -29,7 +29,7 @@ docker run -d --name paseo \
 | Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL`（+ `CODEX_REVIEW_MODEL`） | `CODEX_VERSION` |
 | OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL`（+ `OPENCODE_SMALL_MODEL`） | `OPENCODE_VERSION` |
 
-默认连官方 API，自定义端点用 `CLAUDE_BASE_URL`/`CODEX_BASE_URL`/`OPENCODE_BASE_URL`。OpenCode 模型用 `provider/model` 格式（`OPENCODE_MODEL=deepseek/deepseek-chat`）；Anthropic 兼容端点设 `OPENCODE_PROVIDER=anthropic`。
+默认连官方 API，自定义端点用 `CLAUDE_BASE_URL`/`CODEX_BASE_URL`/`OPENCODE_BASE_URL`。OpenCode 模型用 `provider/model` 格式（`OPENCODE_MODEL=deepseek/deepseek-chat`）。Anthropic 兼容端点设 `OPENCODE_PROVIDER=anthropic`。
 
 ### 开发工具
 
