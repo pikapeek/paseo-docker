@@ -111,11 +111,8 @@ _install_npm() {
     echo "  [${bin}] 跳过 (v${ver} 已安装)"
     return 0
   fi
-  npm install -g "${NPM_ARGS[@]}" "${pkg}@${ver}" 2>/dev/null
-  # Ensure npm global bin is visible to paseo user (PATH already set in entrypoint)
-  local bin_path; bin_path="$(npm bin -g 2>/dev/null)"
-  [[ -n "$bin_path" && -x "${bin_path}/${bin}" ]] && chmod +x "${bin_path}/${bin}" 2>/dev/null || true
-  echo "  [${bin}] 已安装到 $(command -v "$bin" 2>/dev/null || echo '?')"
+  npm install -g --prefix /usr/local "${NPM_ARGS[@]}" "${pkg}@${ver}" 2>/dev/null
+  echo "  [${bin}] → /usr/local/bin/${bin}"
 }
 
 install_claude()   { _install_npm claude   @anthropic-ai/claude-code "$1"; }
@@ -299,8 +296,8 @@ TOOL_LABEL+=(codex);     TOOL_FLAG+=("${INSTALL_CODEX:-}");     TOOL_VER_VAR+=(C
 TOOL_LABEL+=(opencode);  TOOL_FLAG+=("${INSTALL_OPENCODE:-}");  TOOL_VER_VAR+=(OPENCODE_VERSION);  TOOL_FUNC+=(install_opencode); TOOL_SRC+=("$_npm_src"); TOOL_TO+=(300)
 
 TOOL_LABEL+=(go);        TOOL_FLAG+=("${INSTALL_GO:-}");        TOOL_VER_VAR+=(GO_VERSION);        TOOL_FUNC+=(install_go);       TOOL_SRC+=("https://go.dev/dl/ ${GO_MIRROR_URL:-} https://mirrors.ustc.edu.cn/golang/"); TOOL_TO+=(600)
-TOOL_LABEL+=(flutter);   TOOL_FLAG+=("${INSTALL_FLUTTER:-}");   TOOL_VER_VAR+=(FLUTTER_VERSION);   TOOL_FUNC+=(install_flutter);  TOOL_SRC+=("https://storage.googleapis.com ${FLUTTER_MIRROR:-} https://storage.flutter-io.cn"); TOOL_TO+=(900)
 TOOL_LABEL+=(gh);        TOOL_FLAG+=("${INSTALL_GH:-}");        TOOL_VER_VAR+=(GH_VERSION);        TOOL_FUNC+=(install_gh);       TOOL_SRC+=("https://github.com ${GH_MIRROR_URL:-} https://mirror.ghproxy.com"); TOOL_TO+=(180)
+TOOL_LABEL+=(flutter);   TOOL_FLAG+=("${INSTALL_FLUTTER:-}");   TOOL_VER_VAR+=(FLUTTER_VERSION);   TOOL_FUNC+=(install_flutter);  TOOL_SRC+=("https://storage.googleapis.com ${FLUTTER_MIRROR:-} https://storage.flutter-io.cn"); TOOL_TO+=(900)
 
 # Count enabled
 ENABLED=0
@@ -321,9 +318,7 @@ for i in "${!TOOL_LABEL[@]}"; do
   sources="${TOOL_SRC[$i]}"
 
   if [[ "$flag" != "true" && "$flag" != "1" ]]; then
-    echo "  [${label}] 跳过 (未启用)"
-    SUMMARY_LINES+=("[${label}]|跳过|未启用|-")
-    SUMMARY_SKIP=$((SUMMARY_SKIP+1)); SUMMARY_TOTAL=$((SUMMARY_TOTAL+1))
+    SUMMARY_TOTAL=$((SUMMARY_TOTAL+1))
     continue
   fi
 
@@ -403,7 +398,7 @@ for line in "${SUMMARY_LINES[@]}"; do
 done
 
 echo "=============================================="
-echo "  ${SUMMARY_OK} 成功, ${SUMMARY_SKIP} 跳过, ${SUMMARY_FAIL} 失败"
+echo "  ${SUMMARY_OK} 成功, ${SUMMARY_FAIL} 失败"
 echo "=============================================="
 
 exit 0
