@@ -49,8 +49,11 @@ ENV PASEO_HOSTNAMES=true
 
 # Wrapper entrypoint: install optional tools (root) -> banner -> official
 # entrypoint (drops to paseo user via gosu).
+# Give paseo user passwordless sudo for agent operations (install pkgs, etc.).
 COPY docker-entrypoint.sh /usr/local/bin/paseo-cc-entrypoint.sh
 COPY install-optionals.sh /usr/local/bin/install-optionals.sh
 RUN chmod +x /usr/local/bin/paseo-cc-entrypoint.sh \
-             /usr/local/bin/install-optionals.sh
+             /usr/local/bin/install-optionals.sh \
+ && echo "paseo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/paseo \
+ && chmod 440 /etc/sudoers.d/paseo
 ENTRYPOINT ["/usr/local/bin/paseo-cc-entrypoint.sh"]
