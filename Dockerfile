@@ -54,6 +54,6 @@ COPY docker-entrypoint.sh /usr/local/bin/paseo-cc-entrypoint.sh
 COPY install-optionals.sh /usr/local/bin/install-optionals.sh
 RUN chmod +x /usr/local/bin/paseo-cc-entrypoint.sh \
              /usr/local/bin/install-optionals.sh
-RUN echo "paseo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/paseo \
+RUN printf 'paseo ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/paseo \
  && chmod 440 /etc/sudoers.d/paseo
 ENTRYPOINT ["/usr/local/bin/paseo-cc-entrypoint.sh"]
