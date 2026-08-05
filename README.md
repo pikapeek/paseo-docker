@@ -65,7 +65,7 @@ Spec-driven development. `INSTALL_OPENSPEC=true`, run `openspec init`, then use 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `PASEO_PASSWORD` | Connection password (**required**) | — |
-| `PASEO_HOSTNAMES` | Allowed Host headers | `true` |
+| `PASEO_HOSTNAMES` | Host header allowlist (`true` = allow any; ⚠️ set specific domains instead of `true` for public deployments) | `true` |
 
 ## References
 

@@ -65,7 +65,7 @@ Spec 驱动开发。`INSTALL_OPENSPEC=true`，在项目里 `openspec init`，然
 | 变量 | 说明 | 默认 |
 |------|------|------|
 | `PASEO_PASSWORD` | 连接密码（**必填**） | — |
-| `PASEO_HOSTNAMES` | 允许的 Host header | `true` |
+| `PASEO_HOSTNAMES` | Host header 白名单（`true` = 放行任意，⚠️ 公网部署建议设具体域名而非 `true`） | `true` |
 
 ## 引用
 
