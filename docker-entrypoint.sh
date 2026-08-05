@@ -20,9 +20,10 @@ echo "=============================================="
 # Optional-tool installs run asynchronously in the background so Paseo
 # starts immediately. Tools that fail are logged; boot never blocks.
 # Progress: docker exec paseo tail -f /home/paseo/install-optionals.log
+#   or just: docker logs -f paseo
 if [[ -x /usr/local/bin/install-optionals.sh ]]; then
-  nohup /usr/local/bin/install-optionals.sh > /home/paseo/install-optionals.log 2>&1 &
-  echo "  [optional] tools installing in background (tail /home/paseo/install-optionals.log)"
+  nohup /usr/local/bin/install-optionals.sh 2>&1 | tee /home/paseo/install-optionals.log &
+  echo "  [optional] 工具安装中，docker logs -f 可查看进度"
 fi
 
 # Propagate Go env to the daemon process (gosu does NOT source profile.d).

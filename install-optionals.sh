@@ -237,6 +237,18 @@ skip_ok() {
 
 # ---- tool install functions ----
 
+# Fallback version resolution inside install for tools that need concrete versions.
+# Called when the main loop couldn't resolve "latest" and passed "latest" as the version.
+resolve_latest_inline() {
+  local label="$1"
+  case "$label" in
+    go)      resolve_go_version ;;
+    flutter) resolve_flutter_version ;;
+    gh)      resolve_gh_version ;;
+    *)       echo "latest" ;;
+  esac
+}
+
 # AI Tool: npm-based (claude / openspec / codex / opencode)
 install_npm_tool() {
   local bin="$1" pkg="$2" ver="$3"
@@ -254,6 +266,14 @@ install_npm_tool() {
 # Go toolchain
 install_go() {
   local ver="$1" go_root=/usr/local/go
+
+  # If version resolution failed earlier, try again now
+  if [[ "$ver" == "latest" ]]; then
+    echo "  [go] 解析最新版本..."
+    ver="$(resolve_go_version)"
+    [[ -z "$ver" ]] && ver="latest"
+  fi
+  [[ "$ver" == "latest" ]] && { echo "  [go] 无法解析版本"; return 1; }
 
   if [[ -x "$go_root/bin/go" ]] && "$go_root/bin/go" version 2>/dev/null | grep -qE "go${ver//./\\.}([^0-9]|\$)"; then
     echo "  [go] 跳过 (go${ver} 已安装)"
@@ -300,6 +320,14 @@ EOF
 install_flutter() {
   local ver="$1" flutter_root=/usr/local/flutter
 
+  # If version resolution failed earlier, try again now
+  if [[ "$ver" == "latest" ]]; then
+    echo "  [flutter] 解析最新版本..."
+    ver="$(resolve_flutter_version)"
+    [[ -z "$ver" ]] && ver="latest"
+  fi
+  [[ "$ver" == "latest" ]] && { echo "  [flutter] 无法解析版本"; return 1; }
+
   if [[ -x "$flutter_root/bin/flutter" ]]; then
     local installed; installed="$("$flutter_root/bin/flutter" --version 2>/dev/null | head -1)"
     if [[ "$ver" == "latest" ]]; then
@@ -340,6 +368,14 @@ EOF
 # GitHub CLI (from GitHub Releases .deb, NOT apt)
 install_gh() {
   local ver="$1"
+
+  # If version resolution failed earlier, try again now
+  if [[ "$ver" == "latest" ]]; then
+    echo "  [gh] 解析最新版本..."
+    ver="$(resolve_gh_version)"
+    [[ -z "$ver" ]] && ver="latest"
+  fi
+  [[ "$ver" == "latest" ]] && { echo "  [gh] 无法解析版本"; return 1; }
 
   if have gh; then
     local installed; installed="$(gh --version 2>/dev/null | head -1)"
@@ -566,7 +602,7 @@ for i in "${!TOOL_LABELS[@]}"; do
   if [[ -n "${!ver_var:-}" && "${!ver_var}" != "latest" ]]; then
     requested_ver="${!ver_var}"
   else
-    # Resolve latest
+    # Resolve latest from registry; fall back to npm/curl native "@latest" on failure
     echo "  [${current}/${enabled_count}] ${label}: 解析最新版本..."
     case "$label" in
       claude)
@@ -585,15 +621,13 @@ for i in "${!TOOL_LABELS[@]}"; do
         resolved="$($resolve_fn)"
         ;;
     esac
-    if [[ -z "$resolved" ]]; then
-      echo "  [${current}/${enabled_count}] ${label}: 失败 (无法解析最新版本)"
-      SUMMARY_LINES+=("[${label}]|失败|无法解析最新版本|-")
-      SUMMARY_FAIL=$(( SUMMARY_FAIL + 1 ))
-      SUMMARY_TOTAL=$(( SUMMARY_TOTAL + 1 ))
-      continue
+    if [[ -n "$resolved" ]]; then
+      requested_ver="$resolved"
+      echo "  [${current}/${enabled_count}] ${label}: 最新版本 = ${requested_ver}"
+    else
+      echo "  [${current}/${enabled_count}] ${label}: 版本解析失败, 用 latest 兜底"
+      requested_ver="latest"
     fi
-    requested_ver="$resolved"
-    echo "  [${current}/${enabled_count}] ${label}: 最新版本 = ${requested_ver}"
   fi
 
   # Try each source in order
