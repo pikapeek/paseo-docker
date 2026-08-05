@@ -30,6 +30,17 @@ services:
 
     # ---- IPv6 sysctls (optional) ----
     # Enables IPv6 inside the container (some VPN/network stacks need it).
+    #
+    # ⚠ WARNING: When using network_mode: host, Docker applies sysctls to
+    # the HOST kernel. If the host has IPv6 disabled (disable_ipv6=1),
+    # enabling it here WILL cause the container to fail to start with:
+    #   "sysctl: cannot stat /proc/sys/net/ipv6/conf/.../disable_ipv6"
+    #
+    # Solutions:
+    #   1. Don't use network_mode: host (use cap_add: NET_ADMIN instead)
+    #   2. Enable IPv6 on the host first, then uncomment these sysctls
+    #   3. Leave sysctls commented out (Paseo works fine without IPv6)
+    #
     # sysctls:
     #   - net.ipv6.conf.all.disable_ipv6=0
     #   - net.ipv6.conf.default.disable_ipv6=0
@@ -37,6 +48,7 @@ services:
     environment:
       - PASEO_PASSWORD=change-me   # REQUIRED — daemon auth password
       # - PASEO_LISTEN=0.0.0.0:6767  # custom listen addr/port (host networking) — alter the `ports` mapping to match
+      # - PASEO_LOG_LEVEL=error      # quiet mode: set to error to silence noisy metrics in docker logs (trace/debug/info/warn/error/silent)
 
       # ---- Optional tools: install at startup ----
       # Uncomment any tool you want. Uncomment its *_API_KEY / *_BASE_URL /

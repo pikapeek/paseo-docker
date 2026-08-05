@@ -44,15 +44,12 @@ docker run -d --name paseo \
 
 不填版本 = 用最新版。
 
-## 网络权限（可选）
+## 网络权限
 
 Agent 搭 VPN、改网络接口或跑 `ping`/`tcpdump` 时需要的权限，默认关闭：
 
 - `cap_add: [NET_ADMIN, NET_RAW]` — 管理路由/防火墙、原始套接字
 - `devices: [/dev/net/tun]` — VPN 隧道（WireGuard / OpenVPN）
-- `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` — 启用 IPv6
-
-完整写法见 [`docker-compose.yml`](docker-compose.yml)。⚠️ 会削弱容器隔离，仅在需要时开启。
 
 ## GitHub Token
 
@@ -69,6 +66,7 @@ Spec 驱动开发。`INSTALL_OPENSPEC=true`，在项目里 `openspec init`，然
 | `PASEO_PASSWORD` | 连接密码（**必填**） | — |
 | `PASEO_LISTEN` | 监听地址与端口（host 网络下可自定义端口，如 `PASEO_LISTEN=0.0.0.0:8080`） | `0.0.0.0:6767` |
 | `PASEO_HOSTNAMES` | Host header 白名单（`true` = 放行任意，⚠️ 公网部署建议设具体域名而非 `true`） | `true` |
+| `PASEO_LOG_LEVEL` | 守护进程日志级别（`trace`/`debug`/`info`/`warn`/`error`/`silent`）。嫌 `docker logs` 刷屏就设 `error` | `info` |
 
 ## 引用
 

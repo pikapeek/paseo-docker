@@ -52,6 +52,11 @@ For agents that build VPNs, change network interfaces, or run `ping`/`tcpdump`. 
 - `devices: [/dev/net/tun]` — VPN tunnels (WireGuard / OpenVPN)
 - `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` — enable IPv6
 
+> ⚠️ **IPv6 sysctls conflict with host networking**: When using `network_mode: host`, Docker applies sysctls to the **host** kernel. If the host has IPv6 disabled (`disable_ipv6=1`), the container's `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` WILL cause the container to fail. Solutions:
+> 1. Use `cap_add: NET_ADMIN` instead of `network_mode: host`
+> 2. Enable IPv6 on the host first, then uncomment the sysctls
+> 3. Leave IPv6 sysctls off (Paseo doesn't require IPv6)
+
 Full syntax in [`docker-compose.yml`](docker-compose.yml). ⚠️ Weakens container isolation — enable only when needed.
 
 ## GitHub Token
@@ -69,6 +74,7 @@ Spec-driven development. `INSTALL_OPENSPEC=true`, run `openspec init`, then use 
 | `PASEO_PASSWORD` | Connection password (**required**) | — |
 | `PASEO_LISTEN` | Listen address & port (custom port on host networking, e.g. `PASEO_LISTEN=0.0.0.0:8080`) | `0.0.0.0:6767` |
 | `PASEO_HOSTNAMES` | Host header allowlist (`true` = allow any; ⚠️ set specific domains instead of `true` for public deployments) | `true` |
+| `PASEO_LOG_LEVEL` | Daemon log level (`trace`/`debug`/`info`/`warn`/`error`/`silent`). Set to `error` to silence noisy metrics output in `docker logs` | `info` |
 
 ## References
 
