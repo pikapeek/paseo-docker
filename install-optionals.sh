@@ -184,43 +184,30 @@ run_with_retry() {
 
 # ---- version resolution helpers ----
 resolve_npm_version() {
-  local pkg="$1" registry="$2"
-  local url="${registry}/${pkg}/latest"
-  timeout 30 curl -fsSL --connect-timeout 10 "$url" 2>/dev/null \
-    | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])" 2>/dev/null
+  local pkg="$1"
+  npm view "$pkg" version 2>/dev/null
 }
 
 resolve_go_version() {
-  local mirror="$1"
-  local url="${mirror}go.dev/dl/?mode=json"
-  # Use primary go.dev URL, but substitute mirror base for the actual download step
-  timeout 30 curl -fsSL --connect-timeout 10 "https://go.dev/dl/?mode=json" 2>/dev/null \
-    | python3 -c "
-import json,sys
-data=json.load(sys.stdin)
-for r in data:
-    if r.get('stable',False):
-        v=r['version']
-        print(v[2:] if v.startswith('go') else v); break
-" 2>/dev/null
+  # https://go.dev/VERSION?m=text 直接返回 "go1.23.4" 纯文本，无需 JSON 解析
+  timeout 30 curl -fsSL --connect-timeout 10 \
+    "https://go.dev/VERSION?m=text" 2>/dev/null \
+    | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
 }
 
 resolve_flutter_version() {
+  # 取 JSON 中第一个 "channel":"stable" 附近的版本
   timeout 30 curl -fsSL --connect-timeout 10 \
     "https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json" 2>/dev/null \
-    | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-for r in d['releases']:
-    if r['channel']=='stable':
-        print(r['version']); break
-" 2>/dev/null
+    | tr '{},' '\n' | grep -A1 '"channel":"stable"' \
+    | grep '"version"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
 }
 
 resolve_gh_version() {
   timeout 30 curl -fsSL --connect-timeout 10 \
     "https://api.github.com/repos/cli/cli/releases/latest" 2>/dev/null \
-    | python3 -c "import json,sys; v=json.load(sys.stdin)['tag_name']; print(v[1:] if v.startswith('v') else v)" 2>/dev/null
+    | sed -n 's/.*"tag_name"[^"]*"\([^"]*\)".*/\1/p' \
+    | sed 's/^v//' | head -1
 }
 
 # ---- idempotency check ----
@@ -235,9 +222,12 @@ skip_ok() {
   return 1
 }
 
-# ---- tool install functions ----
-
-# Fallback version resolution inside install for tools that need concrete versions.
+# Run a bash function with a wall-clock timeout.
+# timeout(1) can only exec external commands, so we spawn a child bash.
+run_func_with_timeout() {
+  local timeout_s="$1" func="$2"; shift 2
+  timeout "$timeout_s" bash -c "$(declare -f "$func"); ${func} $(printf '%q ' "$@")"
+}
 # Called when the main loop couldn't resolve "latest" and passed "latest" as the version.
 resolve_latest_inline() {
   local label="$1"
@@ -656,25 +646,25 @@ for i in "${!TOOL_LABELS[@]}"; do
       ret=0
       case "$label" in
         claude|openspec|codex|opencode)
-          timeout "$MAX_WALL_TIME" install_npm_tool "$label" \
+          run_func_with_timeout "$MAX_WALL_TIME" install_npm_tool "$label" \
             "$(case $label in
               claude)   echo "@anthropic-ai/claude-code" ;;
               openspec) echo "@fission-ai/openspec" ;;
               codex)    echo "@openai/codex" ;;
               opencode) echo "opencode-ai" ;;
-            esac)" "$requested_ver" 2>&1
+            esac)" "$requested_ver"
           ret=$?
           ;;
         go)
-          timeout "$MAX_WALL_TIME" install_go "$requested_ver" 2>&1
+          run_func_with_timeout "$MAX_WALL_TIME" install_go "$requested_ver"
           ret=$?
           ;;
         flutter)
-          timeout "$MAX_WALL_TIME" install_flutter "$requested_ver" 2>&1
+          run_func_with_timeout "$MAX_WALL_TIME" install_flutter "$requested_ver"
           ret=$?
           ;;
         gh)
-          timeout "$MAX_WALL_TIME" install_gh "$requested_ver" 2>&1
+          run_func_with_timeout "$MAX_WALL_TIME" install_gh "$requested_ver"
           ret=$?
           ;;
       esac
