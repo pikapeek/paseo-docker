@@ -17,6 +17,7 @@ ENV INSTALL_OPENSPEC=""
 ENV INSTALL_CODEX=""
 ENV INSTALL_OPENCODE=""
 ENV INSTALL_GO=""
+ENV INSTALL_FLUTTER=""
 ENV INSTALL_GH=""
 
 ENV CLAUDE_VERSION="latest"
@@ -24,6 +25,7 @@ ENV OPENSPEC_VERSION="latest"
 ENV CODEX_VERSION="latest"
 ENV OPENCODE_VERSION="latest"
 ENV GO_VERSION="1.26.5"
+ENV FLUTTER_VERSION="latest"
 
 # ---- Per-tool API credentials (independent) ----
 # Each AI tool is configured with its own key + base URL. Version pins above

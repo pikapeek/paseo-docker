@@ -80,6 +80,7 @@ skipped — the daemon always starts.
 | Codex | `INSTALL_CODEX=true` | `CODEX_VERSION` (`latest`) | `npm i -g @openai/codex` |
 | OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_VERSION` (`latest`) | `npm i -g opencode-ai` |
 | Go | `INSTALL_GO=true` | `GO_VERSION` (`1.26.5`) | go.dev tarball → `/usr/local/go` |
+| Flutter | `INSTALL_FLUTTER=true` | `FLUTTER_VERSION` (`latest`) | flutter.dev tar.xz → `/usr/local/flutter` |
 | gh (GitHub CLI) | `INSTALL_GH=true` | — | `apt-get install gh` |
 
 **Node.js** is provided by the base image (`node:22`) and is always present —
@@ -142,12 +143,14 @@ openspec init
 | `INSTALL_CODEX` | Install Codex at startup | off |
 | `INSTALL_OPENCODE` | Install OpenCode at startup | off |
 | `INSTALL_GO` | Install Go at startup | off |
+| `INSTALL_FLUTTER` | Install Flutter at startup | off |
 | `INSTALL_GH` | Install GitHub CLI at startup | off |
 | `CLAUDE_VERSION` | Version pin for Claude Code | `latest` |
 | `OPENSPEC_VERSION` | Version pin for OpenSpec | `latest` |
 | `CODEX_VERSION` | Version pin for Codex | `latest` |
 | `OPENCODE_VERSION` | Version pin for OpenCode | `latest` |
 | `GO_VERSION` | Version pin for Go (e.g. `1.26.5`) | `1.26.5` |
+| `FLUTTER_VERSION` | Version pin for Flutter (e.g. `3.44.8`) | `latest` |
 | `CLAUDE_API_KEY` | Claude Code API key (independent) | — |
 | `CLAUDE_BASE_URL` | Claude Code API endpoint | `https://api.anthropic.com` |
 | `CLAUDE_MODEL` | Claude Code main model | — |

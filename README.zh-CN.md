@@ -75,6 +75,7 @@ Web UI 连接时输入 `PASEO_PASSWORD`。
 | Codex | `INSTALL_CODEX=true` | `CODEX_VERSION`（`latest`） | `npm i -g @openai/codex` |
 | OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_VERSION`（`latest`） | `npm i -g opencode-ai` |
 | Go | `INSTALL_GO=true` | `GO_VERSION`（`1.26.5`） | go.dev 官方包 → `/usr/local/go` |
+| Flutter | `INSTALL_FLUTTER=true` | `FLUTTER_VERSION`（`latest`） | flutter.dev 官方包 → `/usr/local/flutter` |
 | gh（GitHub CLI） | `INSTALL_GH=true` | — | `apt-get install gh` |
 
 **Node.js** 由 base 镜像提供（`node:22`），始终存在 —— paseo 的 daemon 依赖它，因此不可单独选择。
@@ -131,12 +132,14 @@ openspec init
 | `INSTALL_CODEX` | 启动时安装 Codex | 关 |
 | `INSTALL_OPENCODE` | 启动时安装 OpenCode | 关 |
 | `INSTALL_GO` | 启动时安装 Go | 关 |
+| `INSTALL_FLUTTER` | 启动时安装 Flutter | 关 |
 | `INSTALL_GH` | 启动时安装 GitHub CLI | 关 |
 | `CLAUDE_VERSION` | Claude Code 版本锁定 | `latest` |
 | `OPENSPEC_VERSION` | OpenSpec 版本锁定 | `latest` |
 | `CODEX_VERSION` | Codex 版本锁定 | `latest` |
 | `OPENCODE_VERSION` | OpenCode 版本锁定 | `latest` |
 | `GO_VERSION` | Go 版本锁定（如 `1.26.5`） | `1.26.5` |
+| `FLUTTER_VERSION` | Flutter 版本锁定（如 `3.44.8`） | `latest` |
 | `CLAUDE_API_KEY` | Claude Code API key（独立） | — |
 | `CLAUDE_BASE_URL` | Claude Code API 端点 | `https://api.anthropic.com` |
 | `CLAUDE_MODEL` | Claude Code 主模型 | — |

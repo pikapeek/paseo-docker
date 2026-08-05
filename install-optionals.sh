@@ -11,6 +11,7 @@
 #   INSTALL_CODEX    (CODEX_VERSION)    npm @openai/codex
 #   INSTALL_OPENCODE (OPENCODE_VERSION) npm opencode-ai
 #   INSTALL_GO       (GO_VERSION)       go.dev official tarball
+#   INSTALL_FLUTTER  (FLUTTER_VERSION)  flutter.dev official tar.xz
 #   INSTALL_GH                          apt-get install gh
 #
 # Semantics:
@@ -100,6 +101,56 @@ export PATH="$GOROOT/bin:$PATH"
 EOF
   chmod 644 /etc/profile.d/paseo-go.sh
   ok go "$("$go_root/bin/go" version 2>&1)"
+}
+
+# ---- Flutter SDK (official tar.xz) ----
+install_flutter() {
+  [[ "${INSTALL_FLUTTER:-}" == "true" || "${INSTALL_FLUTTER:-}" == "1" ]] || return 0
+  local ver="${FLUTTER_VERSION:-latest}" flutter_root=/usr/local/flutter
+  if [[ -x "$flutter_root/bin/flutter" ]] && [[ "$ver" == "latest" ]]; then
+    ok flutter "already installed (skipped)"
+    return 0
+  fi
+  local url
+  if [[ "$ver" == "latest" ]]; then
+    # Resolve the latest stable release from the official index.
+    local releases
+    releases="$(curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json" 2>/dev/null || true)"
+    if [[ -z "$releases" ]]; then
+      bad flutter "failed to resolve latest version"; return 1
+    fi
+    # Releases are newest-first; take the first entry whose channel is stable.
+    ver="$(echo "$releases" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for r in d['releases']:
+    if r['channel']=='stable':
+        print(r['version']); break
+" 2>/dev/null || true)"
+    if [[ -z "$ver" ]]; then
+      bad flutter "failed to parse latest version"; return 1
+    fi
+  fi
+  url="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${ver}-stable.tar.xz"
+  local tmp; tmp="$(mktemp -d)"
+  inf "downloading ${url} ..."
+  if ! curl -fsSL "$url" -o "$tmp/flutter.tar.xz"; then
+    bad flutter "download failed: $url"; rm -rf "$tmp"; return 1
+  fi
+  inf "extracting to $flutter_root ..."
+  rm -rf "$flutter_root"
+  if ! tar -C /usr/local -xJf "$tmp/flutter.tar.xz"; then
+    bad flutter "extract failed"; rm -rf "$tmp"; return 1
+  fi
+  rm -rf "$tmp"
+  # PATH for interactive/login shells (mirrors the Go setup).
+  cat > /etc/profile.d/paseo-flutter.sh <<'EOF'
+export PATH="/usr/local/flutter/bin:$PATH"
+EOF
+  chmod 644 /etc/profile.d/paseo-flutter.sh
+  # First run generates the Dart SDK; allow a generous timeout.
+  "$flutter_root/bin/flutter" --version >/dev/null 2>&1 || true
+  ok flutter "$("$flutter_root/bin/flutter" --version 2>/dev/null | head -1)"
 }
 
 # ---- GitHub CLI (needs apt) ----
@@ -252,6 +303,7 @@ install_npm_tool "${INSTALL_OPENSPEC:-}" openspec  @fission-ai/openspec      "${
 install_npm_tool "${INSTALL_CODEX:-}"    codex     @openai/codex             "${CODEX_VERSION:-latest}"
 install_npm_tool "${INSTALL_OPENCODE:-}" opencode  opencode-ai               "${OPENCODE_VERSION:-latest}"
 install_go
+install_flutter
 install_gh
 
 configure_claude

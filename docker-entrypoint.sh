@@ -30,6 +30,11 @@ if [[ -x /usr/local/go/bin/go ]]; then
   export PATH="/usr/local/go/bin:$PATH"
 fi
 
+# Propagate Flutter's bin to PATH for the daemon/agents.
+if [[ -x /usr/local/flutter/bin/flutter ]]; then
+  export PATH="/usr/local/flutter/bin:$PATH"
+fi
+
 # Export per-tool API vars so the daemon (and any agent it spawns) inherit
 # them. Codex's config.toml references CODEX_API_KEY by name via env_key, so
 # it MUST be in the environment. Claude/OpenCode read their config files
@@ -51,6 +56,7 @@ probe "OpenSpec"    openspec
 probe "Codex"       codex
 probe "OpenCode"    opencode
 probe "Go"          go
+probe "Flutter"     flutter
 probe "gh"          gh
 echo "=============================================="
 
