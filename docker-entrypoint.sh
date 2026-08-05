@@ -81,4 +81,9 @@ fi
 echo "=============================================="
 echo ""
 
-exec /usr/bin/tini -- /usr/local/bin/paseo-docker-entrypoint "$@"
+# Start Paseo daemon directly as ROOT (not gosu paseo).
+# All optional tools are installed globally by this point.
+exec /usr/bin/tini -- paseo daemon \
+  --listen "${PASEO_LISTEN:-0.0.0.0:6767}" \
+  --password "${PASEO_PASSWORD}" \
+  --hostnames "${PASEO_HOSTNAMES:-true}"

@@ -77,8 +77,7 @@ resolve_go() {
 resolve_flutter() {
   timeout 30 curl -fsSL --connect-timeout 10 \
     "https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json" 2>/dev/null \
-    | tr '{},' '\n' | grep -A1 '"channel":"stable"' \
-    | grep '"version"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
+    | sed -n '/"channel"[[:space:]]*:[[:space:]]*"stable"/{n;s/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p;q}'
 }
 
 resolve_gh() {
@@ -113,6 +112,10 @@ _install_npm() {
     return 0
   fi
   npm install -g "${NPM_ARGS[@]}" "${pkg}@${ver}" 2>/dev/null
+  # Ensure npm global bin is visible to paseo user (PATH already set in entrypoint)
+  local bin_path; bin_path="$(npm bin -g 2>/dev/null)"
+  [[ -n "$bin_path" && -x "${bin_path}/${bin}" ]] && chmod +x "${bin_path}/${bin}" 2>/dev/null || true
+  echo "  [${bin}] 已安装到 $(command -v "$bin" 2>/dev/null || echo '?')"
 }
 
 install_claude()   { _install_npm claude   @anthropic-ai/claude-code "$1"; }
