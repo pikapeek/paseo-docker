@@ -1,4 +1,4 @@
-name: Build & Publish Docker Image
+name: Docker Publish
 
 on:
   # ---- 自动：每天检查 Paseo 新版本 + 项目文件变更 ----
@@ -53,7 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           echo '::group::解析 Paseo 版本'
-          MANUAL='${{ github.event.inputs.paseo_version || "" }}'
+          MANUAL='${{ github.event.inputs.paseo_version }}'
 
           if [[ -n "${MANUAL}" ]]; then
             VER="${MANUAL}"
@@ -92,7 +92,7 @@ jobs:
         run: |
           set -euo pipefail
           VER='${{ steps.version.outputs.version }}'
-          FORCE='${{ github.event.inputs.force_rebuild || 'false' }}'
+          FORCE='${{ github.event.inputs.force_rebuild }}'
           TAG="${REGISTRY}/${IMAGE}:${VER}"
           echo "version=${VER}" >> "${GITHUB_OUTPUT}"
 
@@ -149,14 +149,14 @@ jobs:
         shell: bash
         run: |
           VER='${{ steps.version.outputs.version }}'
-          BUILD='${{ steps.check.outputs.should_build || 'false' }}'
+          BUILD='${{ steps.check.outputs.should_build }}'
           FULL="${REGISTRY}/${IMAGE}"
 
           echo '---'
 
           if [[ "${BUILD}" == 'true' ]]; then
             ICON='🚀' STATUS='已发布'
-            DIGEST='${{ steps.build.outputs.digest || '' }}'
+            DIGEST='${{ steps.build.outputs.digest }}'
           else
             ICON='⚡' STATUS='已跳过（镜像已存在）'
             DIGEST='—'
