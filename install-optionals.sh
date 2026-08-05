@@ -33,6 +33,9 @@ trap 'kill -TERM -- -$$ 2>/dev/null; wait' EXIT INT TERM
 PASEO_UID="${PASEO_UID:-1000}"
 PASEO_GID="${PASEO_GID:-1000}"
 PASEO_HOME="${PASEO_HOME:-/home/paseo}"
+# All tools persist under $PASEO_HOME/.local (on the Docker volume)
+LOCAL="${PASEO_HOME}/tool"
+export PATH="${LOCAL}/bin:${LOCAL}/go/bin:${LOCAL}/flutter/bin:${PATH}"
 
 # ---- configurable defaults ----
 RETRY_COUNT="${INSTALL_RETRY_COUNT:-3}"
@@ -62,7 +65,7 @@ analyze_exit_code() {
 curl_dl() {
   local url="$1" dest="$2" label="$3"
   inf "${label}: 下载 ${url} ..."
-  curl -fSL --connect-timeout 30 --retry 3 --retry-delay 5 "$url" -o "$dest"
+  curl -fSL -C - --connect-timeout 30 --retry 3 --retry-delay 5 "$url" -o "$dest"
 }
 
 # ---- run a bash function (no timeout — download till success or failure) ----
@@ -111,8 +114,10 @@ _install_npm() {
     echo "  [${bin}] 跳过 (v${ver} 已安装)"
     return 0
   fi
-  npm install -g --prefix /usr/local "${NPM_ARGS[@]}" "${pkg}@${ver}" 2>/dev/null
-  echo "  [${bin}] → /usr/local/bin/${bin}"
+  mkdir -p "${LOCAL}/bin" "${LOCAL}/lib/node_modules"
+  npm install -g --prefix "${LOCAL}" "${NPM_ARGS[@]}" "${pkg}@${ver}" 2>/dev/null
+  own_as_paseo "${LOCAL}"
+  echo "  [${bin}] → ${LOCAL}/bin/${bin}"
 }
 
 install_claude()   { _install_npm claude   @anthropic-ai/claude-code "$1"; }
@@ -122,7 +127,7 @@ install_opencode() { _install_npm opencode opencode-ai               "$1"; }
 
 # ---- Go ----
 install_go() {
-  local ver="$1" go_root=/usr/local/go
+  local ver="$1" go_root="${LOCAL}/go"
 
   if [[ "$ver" == "latest" ]]; then
     [[ -x "$go_root/bin/go" ]] && { echo "  [go] 跳过 (已安装)"; return 0; }
@@ -147,20 +152,17 @@ install_go() {
 
   inf "解压到 ${go_root} ..."
   rm -rf "$go_root"
-  tar -C /usr/local -xzf "$tmp/go.tgz" || { rm -rf "$tmp"; return 1; }
-  rm -rf "$tmp"
+  mkdir -p "$(dirname "$go_root")"
+  tar -C "${LOCAL}" -xzf "$tmp/go.tgz" || { rm -f "$tmp/go.tgz"; return 1; }
+  rm -f "$tmp/go.tgz"
+  own_as_paseo "$go_root"
 
-  cat > /etc/profile.d/paseo-go.sh <<'EOF'
-export GOROOT=/usr/local/go
-export PATH="$GOROOT/bin:$PATH"
-EOF
-  chmod 644 /etc/profile.d/paseo-go.sh
-  "$go_root/bin/go" version 2>&1
+  [[ -x "$go_root/bin/go" ]] && "$go_root/bin/go" version 2>&1
 }
 
 # ---- Flutter ----
 install_flutter() {
-  local ver="$1" flutter_root=/usr/local/flutter
+  local ver="$1" flutter_root="${LOCAL}/flutter"
 
   if [[ "$ver" == "latest" ]]; then
     [[ -x "$flutter_root/bin/flutter" ]] && { echo "  [flutter] 跳过 (已安装)"; return 0; }
@@ -172,19 +174,16 @@ install_flutter() {
       && { echo "  [flutter] 跳过 (v${ver} 已安装)"; return 0; }
   fi
 
-  local dl_url="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${ver}-stable.tar.xz"
   local tmp; tmp="$(mktemp -d)"
   curl_dl "$dl_url" "$tmp/flutter.tar.xz" "flutter" || { rm -rf "$tmp"; return 1; }
 
   inf "解压到 ${flutter_root} ..."
   rm -rf "$flutter_root"
-  tar -C /usr/local -xJf "$tmp/flutter.tar.xz" || { rm -rf "$tmp"; return 1; }
+  mkdir -p "$(dirname "$flutter_root")"
+  tar -C "${LOCAL}" -xJf "$tmp/flutter.tar.xz" || { rm -rf "$tmp"; return 1; }
   rm -rf "$tmp"
+  own_as_paseo "$flutter_root"
 
-  cat > /etc/profile.d/paseo-flutter.sh <<'EOF'
-export PATH="/usr/local/flutter/bin:$PATH"
-EOF
-  chmod 644 /etc/profile.d/paseo-flutter.sh
   "$flutter_root/bin/flutter" --version >/dev/null 2>&1 || true
   "$flutter_root/bin/flutter" --version 2>/dev/null | head -1
 }

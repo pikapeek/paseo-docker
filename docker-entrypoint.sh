@@ -26,15 +26,17 @@ if [[ -x /usr/local/bin/install-optionals.sh ]]; then
   echo "  [optional] 工具安装中，docker logs -f 可查看进度"
 fi
 
-# Propagate Go env to the daemon process (gosu does NOT source profile.d).
-if [[ -x /usr/local/go/bin/go ]]; then
-  export GOROOT=/usr/local/go
-  export PATH="/usr/local/go/bin:$PATH"
+# Volume-persisted tool paths (all under /home/paseo/tool)
+LOCAL="${PASEO_HOME:-/home/paseo}/tool"
+
+# Propagate tool paths to the daemon process (gosu does NOT source profile.d).
+if [[ -x "${LOCAL}/go/bin/go" ]]; then
+  export GOROOT="${LOCAL}/go"
+  export PATH="${LOCAL}/go/bin:$PATH"
 fi
 
-# Propagate Flutter's bin to PATH for the daemon/agents.
-if [[ -x /usr/local/flutter/bin/flutter ]]; then
-  export PATH="/usr/local/flutter/bin:$PATH"
+if [[ -x "${LOCAL}/flutter/bin/flutter" ]]; then
+  export PATH="${LOCAL}/flutter/bin:$PATH"
 fi
 
 # Export per-tool API vars so the daemon (and any agent it spawns) inherit
