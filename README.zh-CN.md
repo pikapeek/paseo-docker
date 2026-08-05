@@ -1,39 +1,24 @@
 # Paseo + 可选工具
 
-基于官方 base 的 [Paseo](https://github.com/getpaseo/paseo) Docker 镜像，默认最小化，可在**容器启动时**通过环境变量安装 [Claude Code](https://github.com/anthropics/claude-code)、[OpenSpec](https://github.com/Fission-AI/OpenSpec)、[Codex](https://github.com/openai/codex)、[OpenCode](https://github.com/sst/opencode)、[Go](https://go.dev) 和 [gh](https://cli.github.com)。安装后的工具会自动把 API 凭据写入各自的配置文件。
+基于官方 base 的 [Paseo](https://github.com/getpaseo/paseo) Docker 镜像，默认最小化，可在**容器启动时**通过环境变量安装 [Claude Code](https://github.com/anthropics/claude-code)、[OpenSpec](https://github.com/Fission-AI/OpenSpec)、[Codex](https://github.com/openai/codex)、[OpenCode](https://github.com/sst/opencode)、[Go](https://go.dev)、[Flutter](https://flutter.dev) 和 [gh](https://cli.github.com)。安装后的 AI 工具会自动把 API 凭据和模型选择写入各自的配置文件。
 
 [English](README.md)
 
 ## 用法
 
 ```bash
-# 拉取
 docker pull ghcr.io/pikapeek/paseo:latest
 
-# docker run — 最小化（只有 paseo）
 docker run -d --name paseo \
   --restart unless-stopped \
   -p 6767:6767 \
   -e PASEO_PASSWORD="change-me" \
-  -v /data/paseo:/home/paseo \
-  ghcr.io/pikapeek/paseo:latest
-
-# docker run — 安装 Claude Code + Go
-docker run -d --name paseo \
-  --restart unless-stopped \
-  -p 6767:6767 \
-  -e PASEO_PASSWORD="change-me" \
-  -e INSTALL_CLAUDE=true \
-  -e CLAUDE_API_KEY="your-key" \
-  -e CLAUDE_BASE_URL="https://your-api.example.com" \
-  -e INSTALL_GO=true \
-  -e GO_VERSION="1.26.5" \
   -v /data/paseo:/home/paseo \
   ghcr.io/pikapeek/paseo:latest
 ```
 
 ```yaml
-# docker compose — 全功能
+# docker compose
 services:
   paseo:
     image: ghcr.io/pikapeek/paseo:latest
@@ -43,26 +28,13 @@ services:
       - "6767:6767"
     environment:
       - PASEO_PASSWORD=change-me
-      - GITHUB_TOKEN=ghp_xxx
-      - INSTALL_CLAUDE=true
-      - INSTALL_OPENSPEC=true
-      - INSTALL_CODEX=true
-      - INSTALL_OPENCODE=true
-      - INSTALL_GO=true
-      - INSTALL_GH=true
-      - CLAUDE_API_KEY=your-claude-key
-      - CLAUDE_BASE_URL=https://your-claude-api.example.com
-      - CODEX_API_KEY=sk-codex-xxx
-      - CODEX_BASE_URL=https://your-codex-api.example.com/v1
-      - OPENCODE_API_KEY=sk-opencode-xxx
-      - OPENCODE_BASE_URL=https://your-opencode-api.example.com
     volumes:
       - /data/paseo:/home/paseo
 ```
 
-Dashboard: `http://localhost:6767`
+Dashboard: `http://localhost:6767` — Web UI 连接时输入 `PASEO_PASSWORD`。
 
-Web UI 连接时输入 `PASEO_PASSWORD`。
+要安装工具，只要在下表对应的 `-e` / `environment` 项加上 `INSTALL_*` 标志（及 API / 模型变量）即可。
 
 ## 可选工具
 
@@ -165,3 +137,5 @@ openspec init
 - [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) — AI 原生 Spec 驱动开发
 - [openai/codex](https://github.com/openai/codex) — OpenAI 编程 Agent
 - [sst/opencode](https://github.com/sst/opencode) — 开源 AI 编程 Agent
+- [go.dev](https://go.dev) — Go 工具链
+- [flutter.dev](https://flutter.dev) — Flutter SDK

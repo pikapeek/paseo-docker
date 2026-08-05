@@ -1,39 +1,24 @@
 # Paseo + Optional Tools
 
-[Paseo](https://github.com/getpaseo/paseo) Docker image (over the official base) that starts minimal and lets you install [Claude Code](https://github.com/anthropics/claude-code), [OpenSpec](https://github.com/Fission-AI/OpenSpec), [Codex](https://github.com/openai/codex), [OpenCode](https://github.com/sst/opencode), [Go](https://go.dev), and [gh](https://cli.github.com) at **container startup** via environment variables. Installed tools get their API credentials written into their config files automatically.
+[Paseo](https://github.com/getpaseo/paseo) Docker image (over the official base) that starts minimal and lets you install [Claude Code](https://github.com/anthropics/claude-code), [OpenSpec](https://github.com/Fission-AI/OpenSpec), [Codex](https://github.com/openai/codex), [OpenCode](https://github.com/sst/opencode), [Go](https://go.dev), [Flutter](https://flutter.dev), and [gh](https://cli.github.com) at **container startup** via environment variables. Installed AI tools get their API credentials and model selection written into their config files automatically.
 
 [中文说明](README.zh-CN.md)
 
 ## Usage
 
 ```bash
-# Pull
 docker pull ghcr.io/pikapeek/paseo:latest
 
-# docker run — minimal (only paseo)
 docker run -d --name paseo \
   --restart unless-stopped \
   -p 6767:6767 \
   -e PASEO_PASSWORD="change-me" \
-  -v /data/paseo:/home/paseo \
-  ghcr.io/pikapeek/paseo:latest
-
-# docker run — with Claude Code + Go
-docker run -d --name paseo \
-  --restart unless-stopped \
-  -p 6767:6767 \
-  -e PASEO_PASSWORD="change-me" \
-  -e INSTALL_CLAUDE=true \
-  -e CLAUDE_API_KEY="your-key" \
-  -e CLAUDE_BASE_URL="https://your-api.example.com" \
-  -e INSTALL_GO=true \
-  -e GO_VERSION="1.26.5" \
   -v /data/paseo:/home/paseo \
   ghcr.io/pikapeek/paseo:latest
 ```
 
 ```yaml
-# docker compose — full-featured
+# docker compose
 services:
   paseo:
     image: ghcr.io/pikapeek/paseo:latest
@@ -43,26 +28,13 @@ services:
       - "6767:6767"
     environment:
       - PASEO_PASSWORD=change-me
-      - GITHUB_TOKEN=ghp_xxx
-      - INSTALL_CLAUDE=true
-      - INSTALL_OPENSPEC=true
-      - INSTALL_CODEX=true
-      - INSTALL_OPENCODE=true
-      - INSTALL_GO=true
-      - INSTALL_GH=true
-      - CLAUDE_API_KEY=your-claude-key
-      - CLAUDE_BASE_URL=https://your-claude-api.example.com
-      - CODEX_API_KEY=sk-codex-xxx
-      - CODEX_BASE_URL=https://your-codex-api.example.com/v1
-      - OPENCODE_API_KEY=sk-opencode-xxx
-      - OPENCODE_BASE_URL=https://your-opencode-api.example.com
     volumes:
       - /data/paseo:/home/paseo
 ```
 
-Dashboard: `http://localhost:6767`
+Dashboard: `http://localhost:6767` — enter `PASEO_PASSWORD` in the web UI to connect.
 
-Enter `PASEO_PASSWORD` in the web UI to connect.
+Install a tool by adding its `INSTALL_*` flag (and API/model vars) as extra `-e` / `environment` entries — see the table below.
 
 ## Optional Tools
 
@@ -176,3 +148,5 @@ openspec init
 - [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) — AI-native spec-driven development
 - [openai/codex](https://github.com/openai/codex) — OpenAI coding agent
 - [sst/opencode](https://github.com/sst/opencode) — Open source AI coding agent
+- [go.dev](https://go.dev) — Go toolchain
+- [flutter.dev](https://flutter.dev) — Flutter SDK
