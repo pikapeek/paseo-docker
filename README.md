@@ -1,10 +1,10 @@
 # Paseo + Optional Tools
 
-[Paseo](https://github.com/getpaseo/paseo) Docker image (over the official base) that starts minimal and lets you install [Claude Code](https://github.com/anthropics/claude-code), [OpenSpec](https://github.com/Fission-AI/OpenSpec), [Codex](https://github.com/openai/codex), [OpenCode](https://github.com/sst/opencode), [Go](https://go.dev), [Flutter](https://flutter.dev), and [gh](https://cli.github.com) at **container startup** via environment variables. Installed AI tools get their API credentials and model selection written into their config files automatically.
+[Paseo](https://github.com/getpaseo/paseo) with several AI coding tools pre-integrated. The image starts minimal — just Paseo — and installs whichever tool you need at container startup via an environment variable. Claude Code, Codex, and OpenCode get their API keys and model selection written into their configs automatically, so they work immediately after install.
 
 [中文说明](README.zh-CN.md)
 
-## Usage
+## Quick start
 
 ```bash
 docker pull ghcr.io/pikapeek/paseo:latest
@@ -17,169 +17,83 @@ docker run -d --name paseo \
   ghcr.io/pikapeek/paseo:latest
 ```
 
-```yaml
-# docker compose
-services:
-  paseo:
-    image: ghcr.io/pikapeek/paseo:latest
-    container_name: paseo
-    restart: unless-stopped
-    ports:
-      - "6767:6767"
-    environment:
-      - PASEO_PASSWORD=change-me
-    volumes:
-      - /data/paseo:/home/paseo
-```
+Open `http://localhost:6767` and enter `PASEO_PASSWORD` to connect.
 
-Dashboard: `http://localhost:6767` — enter `PASEO_PASSWORD` in the web UI to connect.
+> For compose, a full template (every option pre-commented) is at [`docker-compose.yml`](docker-compose.yml).
 
-Install a tool by adding its `INSTALL_*` flag (and API/model vars) as extra `-e` / `environment` entries — see the table below.
+## Enable AI tools
 
-A full-featured template with everything pre-commented is provided at [`docker-compose.yml`](docker-compose.yml).
+Add `-e VARIABLE=value` to your run command. Each tool is off by default; set the matching `INSTALL_*` flag and provide its API key.
 
-## Linux Capabilities
+| Tool | Enable | Key | Model (optional) |
+|------|--------|-----|------------------|
+| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` main; `CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` sub-slots |
+| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` main; `CODEX_REVIEW_MODEL` review |
+| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` main; `OPENCODE_SMALL_MODEL` light |
+| OpenSpec | `INSTALL_OPENSPEC=true` | — | — |
+| Go | `INSTALL_GO=true` | — | `GO_VERSION` |
+| Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
+| gh (GitHub CLI) | `INSTALL_GH=true` | `GITHUB_TOKEN` | — |
 
-Vibe-coding agents sometimes need low-level network access — building a VPN,
-tuning network interfaces, or running `ip`/`iptables`/`ping`/`tcpdump` inside
-the container. These are **optional** and disabled by default; grant only what
-your workload needs.
+**Custom API endpoint** — Claude Code: `CLAUDE_BASE_URL`, Codex: `CODEX_BASE_URL`, OpenCode: `OPENCODE_BASE_URL`. Defaults to the official APIs.
 
-| Compose option | Grants | Example use |
-|----------------|--------|-------------|
-| `cap_add: [NET_ADMIN]` | Manage routes, firewall, network interfaces | VPN setup, `ip` / `iptables` |
-| `cap_add: [NET_RAW]` | Raw sockets | `ping`, `tcpdump`, custom packets |
-| `devices: [/dev/net/tun]` | `/dev/net/tun` device | WireGuard / OpenVPN tunnels |
-| `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` | Enable IPv6 in the container | Network stacks that require IPv6 |
+**OpenCode model format** — `provider/model`, e.g. DeepSeek: `OPENCODE_MODEL=deepseek/deepseek-chat`. For an Anthropic-compatible endpoint set `OPENCODE_PROVIDER=anthropic`.
 
-**Docker CLI equivalent** (`--cap-add`, `--device`, `--sysctl`):
+**Example** — Claude Code + Go:
 
 ```bash
 docker run -d --name paseo \
-  --cap-add=NET_ADMIN --cap-add=NET_RAW \
-  --device=/dev/net/tun \
-  --sysctl net.ipv6.conf.all.disable_ipv6=0 \
-  --sysctl net.ipv6.conf.default.disable_ipv6=0 \
+  --restart unless-stopped \
   -p 6767:6767 \
   -e PASEO_PASSWORD="change-me" \
+  -e INSTALL_CLAUDE=true \
+  -e CLAUDE_API_KEY="sk-ant-..." \
+  -e INSTALL_GO=true \
+  -v /data/paseo:/home/paseo \
   ghcr.io/pikapeek/paseo:latest
 ```
 
-> ⚠️ These capabilities weaken the container's isolation. Use them only when
-> the agent genuinely needs network control, and treat the container as
-> trusted.
+## Network permissions (optional)
 
-## Optional Tools
+Agents occasionally need to build VPNs, change network interfaces, or run `ping`/`tcpdump` inside the container. These need extra privileges, disabled by default:
 
-Tools are **off by default** — install only what you need. Each is enabled by
-its `INSTALL_*` flag, optionally pinned with a version (unspecified = latest).
-Installation happens **at container startup, as root**, before the daemon
-drops to the `paseo` user. Installs are idempotent: already-installed tools
-are skipped on later restarts. A tool that fails to install is logged and
-skipped — the daemon always starts.
+- `cap_add: [NET_ADMIN, NET_RAW]` — manage routes/firewall, raw sockets
+- `devices: [/dev/net/tun]` — VPN tunnels (WireGuard / OpenVPN)
+- `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` — enable IPv6 in the container
 
-| Tool | Enable with | Version var (default) | Install |
-|------|------------|----------------------|---------|
-| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_VERSION` (`latest`) | `npm i -g @anthropic-ai/claude-code` |
-| OpenSpec | `INSTALL_OPENSPEC=true` | `OPENSPEC_VERSION` (`latest`) | `npm i -g @fission-ai/openspec` |
-| Codex | `INSTALL_CODEX=true` | `CODEX_VERSION` (`latest`) | `npm i -g @openai/codex` |
-| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_VERSION` (`latest`) | `npm i -g opencode-ai` |
-| Go | `INSTALL_GO=true` | `GO_VERSION` (`1.26.5`) | go.dev tarball → `/usr/local/go` |
-| Flutter | `INSTALL_FLUTTER=true` | `FLUTTER_VERSION` (`latest`) | flutter.dev tar.xz → `/usr/local/flutter` |
-| gh (GitHub CLI) | `INSTALL_GH=true` | — | `apt-get install gh` |
-
-**Node.js** is provided by the base image (`node:22`) and is always present —
-paseo's daemon requires it, so it is not separately selectable.
-
-### API credentials
-
-Each AI tool is configured **independently** with its own key + base URL
-(no shared variables). When a tool is installed, its credentials are written
-into the tool's config file (owned by the `paseo` user), so the agent works
-immediately:
-
-| Tool | Config file | Key var | Base URL var |
-|------|------------|---------|--------------|
-| Claude Code | `~/.claude/settings.json` | `CLAUDE_API_KEY` | `CLAUDE_BASE_URL` |
-| Codex | `~/.codex/config.toml` | `CODEX_API_KEY` | `CODEX_BASE_URL` |
-| OpenCode | `~/.local/share/opencode/auth.json` | `OPENCODE_API_KEY` | `OPENCODE_BASE_URL` |
-
-Each AI tool can also pin its **model(s)** via environment variables. Claude Code
-has four model slots (main + opus/sonnet/haiku aliases), Codex has two (main +
-`/review`), OpenCode has two (main + small model):
-
-| Tool | Model var(s) |
-|------|-------------|
-| Claude Code | `CLAUDE_MODEL`, `CLAUDE_OPUS_MODEL`, `CLAUDE_SONNET_MODEL`, `CLAUDE_HAIKU_MODEL` |
-| Codex | `CODEX_MODEL`, `CODEX_REVIEW_MODEL` |
-| OpenCode | `OPENCODE_MODEL`, `OPENCODE_SMALL_MODEL` (format `provider/model`, e.g. `deepseek/deepseek-chat`) |
-
-If a tool is installed without its API key, it still installs; it simply isn't
-configured until you set the variable and restart.
+Full syntax is in [`docker-compose.yml`](docker-compose.yml). ⚠️ These privileges weaken container isolation — enable only when needed.
 
 ## GitHub Token
 
-Go to [Settings → Developer settings → Personal access tokens → Fine-grained tokens](https://github.com/settings/tokens?type=beta) → Generate new token.
-
-Set `Repository access: All repositories` and grant `Contents: Read-only`. Copy the token and pass it as `GITHUB_TOKEN`. `gh` must be enabled (`INSTALL_GH=true`) for the credential helper to be configured from the token.
+Paseo uses this to clone repositories. Create one at [GitHub → Settings → Developer settings → Fine-grained tokens](https://github.com/settings/tokens?type=beta) with `Repository access: All repositories` + `Contents: Read-only`, and set `GITHUB_TOKEN` (with `INSTALL_GH=true`).
 
 ## OpenSpec
 
-[OpenSpec](https://github.com/Fission-AI/OpenSpec) enables spec-driven development with AI assistants. Enable it with `INSTALL_OPENSPEC=true`, then in your project:
+Spec-driven development. Enable with `INSTALL_OPENSPEC=true`, run `openspec init` in your project, then use `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` in Claude Code for the plan → propose → implement → archive workflow.
 
-```bash
-# Initialize in your project directory
-openspec init
-
-# Then use slash commands in Claude Code:
-# /opsx:explore     — explore and plan before writing code
-# /opsx:propose     — propose a structured change
-# /opsx:apply       — implement planned tasks
-# /opsx:archive     — archive completed changes
-```
-
-## Environment Variables
+## Environment variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PASEO_PASSWORD` | Daemon auth password | — |
-| `INSTALL_CLAUDE` | Install Claude Code at startup (`true`/`1`) | off |
-| `INSTALL_OPENSPEC` | Install OpenSpec at startup | off |
-| `INSTALL_CODEX` | Install Codex at startup | off |
-| `INSTALL_OPENCODE` | Install OpenCode at startup | off |
-| `INSTALL_GO` | Install Go at startup | off |
-| `INSTALL_FLUTTER` | Install Flutter at startup | off |
-| `INSTALL_GH` | Install GitHub CLI at startup | off |
-| `CLAUDE_VERSION` | Version pin for Claude Code | `latest` |
-| `OPENSPEC_VERSION` | Version pin for OpenSpec | `latest` |
-| `CODEX_VERSION` | Version pin for Codex | `latest` |
-| `OPENCODE_VERSION` | Version pin for OpenCode | `latest` |
-| `GO_VERSION` | Version pin for Go (e.g. `1.26.5`) | `1.26.5` |
-| `FLUTTER_VERSION` | Version pin for Flutter (e.g. `3.44.8`) | `latest` |
-| `CLAUDE_API_KEY` | Claude Code API key (independent) | — |
-| `CLAUDE_BASE_URL` | Claude Code API endpoint | `https://api.anthropic.com` |
-| `CLAUDE_MODEL` | Claude Code main model | — |
-| `CLAUDE_OPUS_MODEL` | Claude Code `opus` alias model | — |
-| `CLAUDE_SONNET_MODEL` | Claude Code `sonnet` alias model | — |
-| `CLAUDE_HAIKU_MODEL` | Claude Code `haiku` alias model | — |
-| `CODEX_API_KEY` | Codex API key (independent) | — |
-| `CODEX_BASE_URL` | Codex API endpoint | — |
-| `CODEX_MODEL` | Codex main model | — |
-| `CODEX_REVIEW_MODEL` | Codex `/review` model | — |
-| `OPENCODE_API_KEY` | OpenCode API key (independent) | — |
-| `OPENCODE_BASE_URL` | OpenCode API endpoint | — |
-| `OPENCODE_MODEL` | OpenCode main model (`provider/model`) | — |
-| `OPENCODE_SMALL_MODEL` | OpenCode small model (`provider/model`) | — |
-| `OPENCODE_PROVIDER` | OpenCode provider id (`openai` or `anthropic`) | `openai` |
-| `GITHUB_TOKEN` | GitHub token for `gh` CLI | — |
-| `PASEO_HOSTNAMES` | Allowed Host headers (`true` = all) | `true` |
+| `PASEO_PASSWORD` | Connection password (**required**) | — |
+| `INSTALL_*` | Install the matching tool (see table) | off |
+| `*_VERSION` | Tool version pin (unspecified = latest) | `latest` |
+| `CLAUDE_API_KEY` / `CLAUDE_BASE_URL` | Claude Code credentials | — / `https://api.anthropic.com` |
+| `CLAUDE_MODEL` / `CLAUDE_OPUS_MODEL` / `CLAUDE_SONNET_MODEL` / `CLAUDE_HAIKU_MODEL` | Claude Code models | — |
+| `CODEX_API_KEY` / `CODEX_BASE_URL` | Codex credentials | — |
+| `CODEX_MODEL` / `CODEX_REVIEW_MODEL` | Codex models | — |
+| `OPENCODE_API_KEY` / `OPENCODE_BASE_URL` | OpenCode credentials | — |
+| `OPENCODE_MODEL` / `OPENCODE_SMALL_MODEL` | OpenCode models | — |
+| `OPENCODE_PROVIDER` | OpenCode provider | `openai` |
+| `GITHUB_TOKEN` | GitHub credentials (with `INSTALL_GH`) | — |
+| `PASEO_HOSTNAMES` | Allowed Host headers | `true` |
 
 ## References
 
 - [getpaseo/paseo](https://github.com/getpaseo/paseo) — Multi-agent orchestration CLI
-- [anthropics/claude-code](https://github.com/anthropics/claude-code) — Anthropic official AI coding assistant
-- [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) — AI-native spec-driven development
-- [openai/codex](https://github.com/openai/codex) — OpenAI coding agent
-- [sst/opencode](https://github.com/sst/opencode) — Open source AI coding agent
-- [go.dev](https://go.dev) — Go toolchain
-- [flutter.dev](https://flutter.dev) — Flutter SDK
+- [anthropics/claude-code](https://github.com/anthropics/claude-code) — Claude Code
+- [openai/codex](https://github.com/openai/codex) — OpenAI Codex
+- [sst/opencode](https://github.com/sst/opencode) — OpenCode
+- [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) — Spec-driven development
+- [go.dev](https://go.dev) — Go
+- [flutter.dev](https://flutter.dev) — Flutter
