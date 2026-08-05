@@ -36,6 +36,7 @@ services:
 
     environment:
       - PASEO_PASSWORD=change-me   # REQUIRED — daemon auth password
+      # - PASEO_LISTEN=0.0.0.0:6767  # custom listen addr/port (host networking) — alter the `ports` mapping to match
 
       # ---- Optional tools: install at startup ----
       # Uncomment any tool you want. Uncomment its *_API_KEY / *_BASE_URL /

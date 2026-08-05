@@ -17,6 +17,8 @@ docker run -d --name paseo \
 
 Open `http://localhost:6767`, enter `PASEO_PASSWORD`. For compose, a full pre-commented template: [`docker-compose.yml`](docker-compose.yml).
 
+> Custom port: with host networking (`--network host`), set `-e PASEO_LISTEN=0.0.0.0:8080` to listen on your own port — no `-p` mapping needed.
+
 ## Optional tools
 
 Every tool is off by default. Add its `-e` variables to the run command.
@@ -65,6 +67,7 @@ Spec-driven development. `INSTALL_OPENSPEC=true`, run `openspec init`, then use 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `PASEO_PASSWORD` | Connection password (**required**) | — |
+| `PASEO_LISTEN` | Listen address & port (custom port on host networking, e.g. `PASEO_LISTEN=0.0.0.0:8080`) | `0.0.0.0:6767` |
 | `PASEO_HOSTNAMES` | Host header allowlist (`true` = allow any; ⚠️ set specific domains instead of `true` for public deployments) | `true` |
 
 ## References

@@ -17,6 +17,8 @@ docker run -d --name paseo \
 
 打开 `http://localhost:6767`，输入 `PASEO_PASSWORD`。compose 全功能模板（可选项已注释）见 [`docker-compose.yml`](docker-compose.yml)。
 
+> 端口可改：用 host 网络（`--network host`）时，设 `-e PASEO_LISTEN=0.0.0.0:8080` 即可在自定义端口监听，无需映射 `-p`。
+
 ## 可选工具
 
 每个工具默认关闭，在启动命令加对应的 `-e` 变量即可。
@@ -65,6 +67,7 @@ Spec 驱动开发。`INSTALL_OPENSPEC=true`，在项目里 `openspec init`，然
 | 变量 | 说明 | 默认 |
 |------|------|------|
 | `PASEO_PASSWORD` | 连接密码（**必填**） | — |
+| `PASEO_LISTEN` | 监听地址与端口（host 网络下可自定义端口，如 `PASEO_LISTEN=0.0.0.0:8080`） | `0.0.0.0:6767` |
 | `PASEO_HOSTNAMES` | Host header 白名单（`true` = 放行任意，⚠️ 公网部署建议设具体域名而非 `true`） | `true` |
 
 ## 引用
