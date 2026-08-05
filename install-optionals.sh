@@ -174,6 +174,7 @@ install_flutter() {
       && { echo "  [flutter] 跳过 (v${ver} 已安装)"; return 0; }
   fi
 
+  local dl_url="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${ver}-stable.tar.xz"
   local tmp; tmp="$(mktemp -d)"
   curl_dl "$dl_url" "$tmp/flutter.tar.xz" "flutter" || { rm -rf "$tmp"; return 1; }
 
