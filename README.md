@@ -25,15 +25,17 @@ Open `http://localhost:6767` and enter `PASEO_PASSWORD` to connect.
 
 Add `-e VARIABLE=value` to your run command. Each tool is off by default; set the matching `INSTALL_*` flag and provide its API key.
 
-| Tool | Enable | Key | Model (optional) |
-|------|--------|-----|------------------|
-| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` main; `CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` sub-slots |
-| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` main; `CODEX_REVIEW_MODEL` review |
-| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` main; `OPENCODE_SMALL_MODEL` light |
-| OpenSpec | `INSTALL_OPENSPEC=true` | — | — |
-| Go | `INSTALL_GO=true` | — | `GO_VERSION` |
-| Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
-| gh (GitHub CLI) | `INSTALL_GH=true` | `GITHUB_TOKEN` | — |
+| Tool | Enable | Key | Model (optional) | Version (optional) |
+|------|--------|-----|------------------|--------------------|
+| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` main; `CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` sub-slots | `CLAUDE_VERSION` |
+| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` main; `CODEX_REVIEW_MODEL` review | `CODEX_VERSION` |
+| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` main; `OPENCODE_SMALL_MODEL` light | `OPENCODE_VERSION` |
+| OpenSpec | `INSTALL_OPENSPEC=true` | — | — | `OPENSPEC_VERSION` |
+| Go | `INSTALL_GO=true` | — | — | `GO_VERSION` |
+| Flutter | `INSTALL_FLUTTER=true` | — | — | `FLUTTER_VERSION` |
+| gh (GitHub CLI) | `INSTALL_GH=true` | `GITHUB_TOKEN` | — | — |
+
+Unspecified version = latest.
 
 **Custom API endpoint** — Claude Code: `CLAUDE_BASE_URL`, Codex: `CODEX_BASE_URL`, OpenCode: `OPENCODE_BASE_URL`. Defaults to the official APIs.
 
@@ -71,21 +73,11 @@ Paseo uses this to clone repositories. Create one at [GitHub → Settings → De
 
 Spec-driven development. Enable with `INSTALL_OPENSPEC=true`, run `openspec init` in your project, then use `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` in Claude Code for the plan → propose → implement → archive workflow.
 
-## Environment variables
+## Other environment variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `PASEO_PASSWORD` | Connection password (**required**) | — |
-| `INSTALL_*` | Install the matching tool (see table) | off |
-| `*_VERSION` | Tool version pin (unspecified = latest) | `latest` |
-| `CLAUDE_API_KEY` / `CLAUDE_BASE_URL` | Claude Code credentials | — / `https://api.anthropic.com` |
-| `CLAUDE_MODEL` / `CLAUDE_OPUS_MODEL` / `CLAUDE_SONNET_MODEL` / `CLAUDE_HAIKU_MODEL` | Claude Code models | — |
-| `CODEX_API_KEY` / `CODEX_BASE_URL` | Codex credentials | — |
-| `CODEX_MODEL` / `CODEX_REVIEW_MODEL` | Codex models | — |
-| `OPENCODE_API_KEY` / `OPENCODE_BASE_URL` | OpenCode credentials | — |
-| `OPENCODE_MODEL` / `OPENCODE_SMALL_MODEL` | OpenCode models | — |
-| `OPENCODE_PROVIDER` | OpenCode provider | `openai` |
-| `GITHUB_TOKEN` | GitHub credentials (with `INSTALL_GH`) | — |
 | `PASEO_HOSTNAMES` | Allowed Host headers | `true` |
 
 ## References

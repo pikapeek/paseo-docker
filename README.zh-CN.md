@@ -25,15 +25,17 @@ docker run -d --name paseo \
 
 在启动命令里加 `-e 变量=值` 即可。每个工具默认关闭，加 `INSTALL_*` 启用，同时配上它的 API key 就能用。
 
-| 工具 | 启用 | 需要的 Key | 模型（可选） |
-|------|------|-----------|-------------|
-| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` 主模型；`CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` 三个子槽位 |
-| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` 主模型；`CODEX_REVIEW_MODEL` 审查模型 |
-| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` 主模型；`OPENCODE_SMALL_MODEL` 轻量模型 |
-| OpenSpec | `INSTALL_OPENSPEC=true` | — | — |
-| Go | `INSTALL_GO=true` | — | `GO_VERSION` |
-| Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
-| gh（GitHub CLI） | `INSTALL_GH=true` | `GITHUB_TOKEN` | — |
+| 工具 | 启用 | 需要的 Key | 模型（可选） | 版本（可选） |
+|------|------|-----------|-------------|-------------|
+| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` 主模型；`CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` 三个子槽位 | `CLAUDE_VERSION` |
+| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` 主模型；`CODEX_REVIEW_MODEL` 审查模型 | `CODEX_VERSION` |
+| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` 主模型；`OPENCODE_SMALL_MODEL` 轻量模型 | `OPENCODE_VERSION` |
+| OpenSpec | `INSTALL_OPENSPEC=true` | — | — | `OPENSPEC_VERSION` |
+| Go | `INSTALL_GO=true` | — | — | `GO_VERSION` |
+| Flutter | `INSTALL_FLUTTER=true` | — | — | `FLUTTER_VERSION` |
+| gh（GitHub CLI） | `INSTALL_GH=true` | `GITHUB_TOKEN` | — | — |
+
+不填版本 = 用最新版。
 
 **自定义 API 端点**：Claude Code 用 `CLAUDE_BASE_URL`，Codex 用 `CODEX_BASE_URL`，OpenCode 用 `OPENCODE_BASE_URL`。默认连官方 API。
 
@@ -71,21 +73,11 @@ Paseo 克隆仓库要用。在 [GitHub → Settings → Developer settings → F
 
 Spec 驱动开发，`INSTALL_OPENSPEC=true` 启用后，在项目里 `openspec init`，然后在 Claude Code 里用 `/opsx:explore`、`/opsx:propose`、`/opsx:apply`、`/opsx:archive` 走「规划 → 提方案 → 实现 → 归档」流程。
 
-## 全部环境变量
+## 其他环境变量
 
 | 变量 | 说明 | 默认 |
 |------|------|------|
 | `PASEO_PASSWORD` | 连接密码（**必填**） | — |
-| `INSTALL_*` | 安装对应工具（见上表） | 关 |
-| `*_VERSION` | 工具版本锁定（不填用最新版） | `latest` |
-| `CLAUDE_API_KEY` / `CLAUDE_BASE_URL` | Claude Code 凭据 | — / `https://api.anthropic.com` |
-| `CLAUDE_MODEL` / `CLAUDE_OPUS_MODEL` / `CLAUDE_SONNET_MODEL` / `CLAUDE_HAIKU_MODEL` | Claude Code 模型 | — |
-| `CODEX_API_KEY` / `CODEX_BASE_URL` | Codex 凭据 | — |
-| `CODEX_MODEL` / `CODEX_REVIEW_MODEL` | Codex 模型 | — |
-| `OPENCODE_API_KEY` / `OPENCODE_BASE_URL` | OpenCode 凭据 | — |
-| `OPENCODE_MODEL` / `OPENCODE_SMALL_MODEL` | OpenCode 模型 | — |
-| `OPENCODE_PROVIDER` | OpenCode 提供者 | `openai` |
-| `GITHUB_TOKEN` | GitHub 凭据（配 `INSTALL_GH`） | — |
 | `PASEO_HOSTNAMES` | 允许的 Host header | `true` |
 
 ## 引用
