@@ -37,10 +37,6 @@ PASEO_HOME="${PASEO_HOME:-/home/paseo}"
 # ---- configurable defaults ----
 RETRY_COUNT="${INSTALL_RETRY_COUNT:-3}"
 RETRY_BASE_DELAY="${INSTALL_RETRY_BASE_DELAY:-2}"
-MAX_WALL_TIME="${INSTALL_MAX_WALL_TIME:-7200}"
-SPEED_LIMIT="${INSTALL_SPEED_LIMIT:-1024}"
-STALL_SECONDS_CURL="${INSTALL_STALL_SECONDS:-120}"
-STALL_SECONDS_NPM="${INSTALL_STALL_SECONDS:-180}"
 NPM_CACHE_DIR="${NPM_CACHE_DIR:-/tmp/npm-cache}"
 NPM_ARGS=(--no-audit --no-fund --cache "$NPM_CACHE_DIR")
 
@@ -57,38 +53,19 @@ own_as_paseo() { chown -R "${PASEO_UID}:${PASEO_GID}" "$1" 2>/dev/null || true; 
 analyze_exit_code() {
   case "$1" in
     0)   echo "成功" ;;
-    28)  echo "下载停滞 (速率 < ${SPEED_LIMIT} B/s)" ;;
-    124) echo "超时" ;;
-    125) echo "timeout 命令自身失败" ;;
     137) echo "被 SIGKILL 强制终止" ;;
     139) echo "段错误 (SIGSEGV)" ;;
-    143) echo "被 SIGTERM 终止" ;;
     *)   echo "非零退出码: $1" ;;
   esac
 }
 
-# ---- stall-detect for curl downloads ----
 curl_dl() {
   local url="$1" dest="$2" label="$3"
   inf "${label}: 下载 ${url} ..."
-  curl --speed-limit "$SPEED_LIMIT" --speed-time "$STALL_SECONDS_CURL" \
-       -fSL --connect-timeout 30 --retry 0 "$url" -o "$dest"
+  curl -fSL --connect-timeout 30 --retry 3 --retry-delay 5 "$url" -o "$dest"
 }
 
-# ---- run a bash function with wall-clock timeout ----
-run_func_with_timeout() {
-  local timeout_s="$1" func="$2"; shift 2
-  local all_funcs
-  all_funcs="$(
-    for fn in have inf own_as_paseo curl_dl analyze_exit_code \
-              resolve_go resolve_flutter resolve_gh \
-              install_claude install_openspec install_codex install_opencode \
-              install_go install_flutter install_gh "$func"; do
-      declare -f "$fn" 2>/dev/null || true
-    done
-  )"
-  timeout "$timeout_s" bash -c "${all_funcs}; ${func} $(printf '%q ' "$@")"
-}
+# ---- run a bash function (no timeout — download till success or failure) ----
 
 # ---- version resolvers (for Go/Flutter/gh "latest" → concrete URL) ----
 resolve_go() {
@@ -366,7 +343,7 @@ for i in "${!TOOL_LABEL[@]}"; do
       local_attempts=$((local_attempts+1))
       echo "  [${CUR}/${ENABLED}] ${label}: 开始安装 (第${local_attempts}/${RETRY_COUNT}次, 源: ${src})"
 
-      run_func_with_timeout "$MAX_WALL_TIME" "$func" "$requested_ver"
+      "$func" "$requested_ver"
       ret=$?
 
       if [[ $ret -eq 0 ]]; then
