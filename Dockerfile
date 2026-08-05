@@ -52,8 +52,12 @@ ENV PASEO_HOSTNAMES=true
 # Give paseo user passwordless sudo for agent operations (install pkgs, etc.).
 COPY docker-entrypoint.sh /usr/local/bin/paseo-cc-entrypoint.sh
 COPY install-optionals.sh /usr/local/bin/install-optionals.sh
-RUN chmod +x /usr/local/bin/paseo-cc-entrypoint.sh \
+# sudo needed for paseo user agents (install pkgs, manage network, etc.)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends sudo && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo "paseo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/paseo && \
+    chmod 440 /etc/sudoers.d/paseo && \
+    chmod +x /usr/local/bin/paseo-cc-entrypoint.sh \
              /usr/local/bin/install-optionals.sh
-RUN printf 'paseo ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/paseo \
- && chmod 440 /etc/sudoers.d/paseo
 ENTRYPOINT ["/usr/local/bin/paseo-cc-entrypoint.sh"]
