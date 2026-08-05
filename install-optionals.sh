@@ -125,12 +125,28 @@ configure_claude() {
   local cfg="$dir/settings.json"
   local base="${CLAUDE_BASE_URL:-}"
   local tok="${CLAUDE_API_KEY:-}"
+  local model="${CLAUDE_MODEL:-}"
+  local opus="${CLAUDE_OPUS_MODEL:-}"
+  local sonnet="${CLAUDE_SONNET_MODEL:-}"
+  local haiku="${CLAUDE_HAIKU_MODEL:-}"
   [[ -n "$tok" ]] || return 0
   mkdir -p "$dir"
   {
     printf '{\n  "env": {\n'
     if [[ -n "$base" ]]; then
       printf '    "ANTHROPIC_BASE_URL": "%s",\n' "$base"
+    fi
+    if [[ -n "$model" ]]; then
+      printf '    "ANTHROPIC_MODEL": "%s",\n' "$model"
+    fi
+    if [[ -n "$opus" ]]; then
+      printf '    "ANTHROPIC_DEFAULT_OPUS_MODEL": "%s",\n' "$opus"
+    fi
+    if [[ -n "$sonnet" ]]; then
+      printf '    "ANTHROPIC_DEFAULT_SONNET_MODEL": "%s",\n' "$sonnet"
+    fi
+    if [[ -n "$haiku" ]]; then
+      printf '    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "%s",\n' "$haiku"
     fi
     printf '    "ANTHROPIC_API_KEY": "%s"\n' "$tok"
     printf '  }\n}\n'
@@ -149,6 +165,7 @@ configure_codex() {
   local cfg="$dir/config.toml"
   local key="${CODEX_API_KEY:-}"
   local base="${CODEX_BASE_URL:-}"
+  local model="${CODEX_MODEL:-}"
   [[ -n "$key" ]] || return 0
   mkdir -p "$dir"
   # Default to official OpenAI endpoint when no custom base URL is set.
@@ -158,6 +175,11 @@ configure_codex() {
   {
     cat <<EOF
 model_provider = "custom"
+EOF
+    if [[ -n "$model" ]]; then
+      echo "model = \"${model}\""
+    fi
+    cat <<EOF
 
 [model_providers.custom]
 name = "custom"
@@ -182,6 +204,7 @@ configure_opencode() {
   local auth="$data/auth.json"
   local key="${OPENCODE_API_KEY:-}"
   local base="${OPENCODE_BASE_URL:-}"
+  local model="${OPENCODE_MODEL:-}"
   local provider="${OPENCODE_PROVIDER:-openai}"
   [[ -n "$key" ]] || return 0
   mkdir -p "$data"
@@ -196,18 +219,23 @@ configure_opencode() {
   own_as_paseo "$data"
   # opencode.json — global config dir is $XDG_CONFIG_HOME/opencode
   # (base image sets XDG_CONFIG_HOME=/home/paseo/.config). Provider baseURL
-  # lives in the `provider` table here.
-  if [[ -n "$base" ]]; then
-    local cfgdir="${XDG_CONFIG_HOME:-${PASEO_HOME}/.config}/opencode"
-    mkdir -p "$cfgdir"
-    local cfg="$cfgdir/opencode.json"
-    printf '{\n  "provider": {\n    "%s": {\n      "options": {\n        "baseURL": "%s"\n      }\n    }\n  }\n}\n' \
-      "$provider" "$base" > "$cfg"
-    own_as_paseo "$cfgdir"
-    ok "opencode-config" "wrote auth.json + opencode.json ($provider)"
-  else
-    ok "opencode-config" "wrote auth.json ($provider)"
-  fi
+  # lives in the `provider` table here; model is top-level "provider/model".
+  local cfgdir="${XDG_CONFIG_HOME:-${PASEO_HOME}/.config}/opencode"
+  mkdir -p "$cfgdir"
+  local cfg="$cfgdir/opencode.json"
+  {
+    printf '{\n'
+    if [[ -n "$model" ]]; then
+      printf '  "model": "%s",\n' "$model"
+    fi
+    printf '  "provider": {\n    "%s": {\n' "$provider"
+    if [[ -n "$base" ]]; then
+      printf '      "options": {\n        "baseURL": "%s"\n      }\n' "$base"
+    fi
+    printf '    }\n  }\n}\n'
+  } > "$cfg"
+  own_as_paseo "$cfgdir"
+  ok "opencode-config" "wrote auth.json + opencode.json ($provider)"
 }
 
 # ---- main ----

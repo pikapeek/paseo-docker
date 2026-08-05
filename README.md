@@ -98,6 +98,16 @@ immediately:
 | Codex | `~/.codex/config.toml` | `CODEX_API_KEY` | `CODEX_BASE_URL` |
 | OpenCode | `~/.local/share/opencode/auth.json` | `OPENCODE_API_KEY` | `OPENCODE_BASE_URL` |
 
+Each AI tool can also pin its **model(s)** via environment variables. Claude Code
+has four model slots (main + opus/sonnet/haiku aliases); Codex and OpenCode have
+one each:
+
+| Tool | Model var(s) |
+|------|-------------|
+| Claude Code | `CLAUDE_MODEL`, `CLAUDE_OPUS_MODEL`, `CLAUDE_SONNET_MODEL`, `CLAUDE_HAIKU_MODEL` |
+| Codex | `CODEX_MODEL` |
+| OpenCode | `OPENCODE_MODEL` (format `provider/model`, e.g. `deepseek/deepseek-chat`) |
+
 If a tool is installed without its API key, it still installs; it simply isn't
 configured until you set the variable and restart.
 
@@ -140,10 +150,16 @@ openspec init
 | `GO_VERSION` | Version pin for Go (e.g. `1.26.5`) | `1.26.5` |
 | `CLAUDE_API_KEY` | Claude Code API key (independent) | — |
 | `CLAUDE_BASE_URL` | Claude Code API endpoint | `https://api.anthropic.com` |
+| `CLAUDE_MODEL` | Claude Code main model | — |
+| `CLAUDE_OPUS_MODEL` | Claude Code `opus` alias model | — |
+| `CLAUDE_SONNET_MODEL` | Claude Code `sonnet` alias model | — |
+| `CLAUDE_HAIKU_MODEL` | Claude Code `haiku` alias model | — |
 | `CODEX_API_KEY` | Codex API key (independent) | — |
 | `CODEX_BASE_URL` | Codex API endpoint | — |
+| `CODEX_MODEL` | Codex model | — |
 | `OPENCODE_API_KEY` | OpenCode API key (independent) | — |
 | `OPENCODE_BASE_URL` | OpenCode API endpoint | — |
+| `OPENCODE_MODEL` | OpenCode model (`provider/model`) | — |
 | `OPENCODE_PROVIDER` | OpenCode provider id (`openai` or `anthropic`) | `openai` |
 | `GITHUB_TOKEN` | GitHub token for `gh` CLI | — |
 | `PASEO_HOSTNAMES` | Allowed Host headers (`true` = all) | `true` |

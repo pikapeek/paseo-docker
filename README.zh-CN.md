@@ -90,6 +90,14 @@ Web UI 连接时输入 `PASEO_PASSWORD`。
 | Codex | `~/.codex/config.toml` | `CODEX_API_KEY` | `CODEX_BASE_URL` |
 | OpenCode | `~/.local/share/opencode/auth.json` | `OPENCODE_API_KEY` | `OPENCODE_BASE_URL` |
 
+每个 AI 工具还能用环境变量**锁定模型**。Claude Code 有四个模型槽位（主模型 + opus/sonnet/haiku 别名）；Codex 和 OpenCode 各一个：
+
+| 工具 | 模型变量 |
+|------|---------|
+| Claude Code | `CLAUDE_MODEL`、`CLAUDE_OPUS_MODEL`、`CLAUDE_SONNET_MODEL`、`CLAUDE_HAIKU_MODEL` |
+| Codex | `CODEX_MODEL` |
+| OpenCode | `OPENCODE_MODEL`（格式 `provider/model`，如 `deepseek/deepseek-chat`） |
+
 如果工具安装了但没设 API key，工具仍会装上，只是暂时未配置；设好变量并重启容器后即生效。
 
 ## GitHub Token
@@ -131,10 +139,16 @@ openspec init
 | `GO_VERSION` | Go 版本锁定（如 `1.26.5`） | `1.26.5` |
 | `CLAUDE_API_KEY` | Claude Code API key（独立） | — |
 | `CLAUDE_BASE_URL` | Claude Code API 端点 | `https://api.anthropic.com` |
+| `CLAUDE_MODEL` | Claude Code 主模型 | — |
+| `CLAUDE_OPUS_MODEL` | Claude Code `opus` 别名模型 | — |
+| `CLAUDE_SONNET_MODEL` | Claude Code `sonnet` 别名模型 | — |
+| `CLAUDE_HAIKU_MODEL` | Claude Code `haiku` 别名模型 | — |
 | `CODEX_API_KEY` | Codex API key（独立） | — |
 | `CODEX_BASE_URL` | Codex API 端点 | — |
+| `CODEX_MODEL` | Codex 模型 | — |
 | `OPENCODE_API_KEY` | OpenCode API key（独立） | — |
 | `OPENCODE_BASE_URL` | OpenCode API 端点 | — |
+| `OPENCODE_MODEL` | OpenCode 模型（`provider/model`） | — |
 | `OPENCODE_PROVIDER` | OpenCode provider id（`openai` 或 `anthropic`） | `openai` |
 | `GITHUB_TOKEN` | GitHub Token（`gh` CLI 鉴权） | — |
 | `PASEO_HOSTNAMES` | 允许的 Host header（`true` = 全部放行） | `true` |
