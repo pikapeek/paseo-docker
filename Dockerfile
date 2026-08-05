@@ -24,7 +24,7 @@ ENV CLAUDE_VERSION="latest"
 ENV OPENSPEC_VERSION="latest"
 ENV CODEX_VERSION="latest"
 ENV OPENCODE_VERSION="latest"
-ENV GO_VERSION="1.26.5"
+ENV GO_VERSION="latest"
 ENV FLUTTER_VERSION="latest"
 
 # ---- Per-tool API credentials (independent) ----

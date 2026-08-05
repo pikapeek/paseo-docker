@@ -71,8 +71,8 @@ install_npm_tool() { # $1=flag $2=binary $3=package $4=version
 # ---- Go toolchain (official tarball) ----
 install_go() {
   [[ "${INSTALL_GO:-}" == "true" || "${INSTALL_GO:-}" == "1" ]] || return 0
-  local ver="${GO_VERSION:-1.26.5}" arch go_root=/usr/local/go
-  if [[ -x "$go_root/bin/go" ]] && "$go_root/bin/go" version | grep -qE "go$ver([^0-9]|$)"; then
+  local ver="${GO_VERSION:-latest}" arch go_root=/usr/local/go
+  if [[ "$ver" == "latest" ]] && [[ -x "$go_root/bin/go" ]]; then
     ok go "already installed (skipped)"
     return 0
   fi
@@ -82,6 +82,35 @@ install_go() {
     armv7l|armhf)  arch=armv6l ;;
     *) bad go "unsupported architecture: $(uname -m)"; return 1 ;;
   esac
+
+  # Resolve latest stable version from go.dev when "latest"
+  if [[ "$ver" == "latest" ]]; then
+    local releases
+    releases="$(curl -fsSL "https://go.dev/dl/?mode=json" 2>/dev/null || true)"
+    if [[ -z "$releases" ]]; then
+      bad go "failed to resolve latest version from go.dev"; return 1
+    fi
+    ver="$(echo "$releases" | python3 -c "
+import json,sys
+data=json.load(sys.stdin)
+for r in data:
+    if r.get('stable',False):
+        v=r['version']
+        # strip 'go' prefix: 'go1.23.4' -> '1.23.4'
+        print(v[2:] if v.startswith('go') else v); break
+" 2>/dev/null || true)"
+    if [[ -z "$ver" ]]; then
+      bad go "failed to parse latest Go version"; return 1
+    fi
+    inf "resolved latest Go: ${ver}"
+  fi
+
+  # Skip if requested version is already installed
+  if [[ -x "$go_root/bin/go" ]] && "$go_root/bin/go" version | grep -qE "go${ver//./\\.}([^0-9]|\$)"; then
+    ok go "already installed (skipped)"
+    return 0
+  fi
+
   local url="https://go.dev/dl/go${ver}.linux-${arch}.tar.gz"
   local tmp; tmp="$(mktemp -d)"
   inf "downloading ${url} ..."
