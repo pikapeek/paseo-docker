@@ -1,14 +1,12 @@
 # Paseo + 可选工具
 
-在 [Paseo](https://github.com/getpaseo/paseo) 上预置了多款 AI 编程工具，默认只跑 Paseo 本体；需要哪个工具，启动时加一个环境变量就自动装好。Claude Code、Codex、OpenCode 的 API key 和模型会自动写入各自的配置，装完即用。
+[Paseo](https://github.com/getpaseo/paseo) 预置多款 AI 编程工具。默认只跑 Paseo 本体；需要哪个工具，启动时加环境变量就自动装好。Claude Code、Codex、OpenCode 的 API key 和模型会自动写入配置，装完即用。
 
 [English](README.md)
 
 ## 快速开始
 
 ```bash
-docker pull ghcr.io/pikapeek/paseo:latest
-
 docker run -d --name paseo \
   --restart unless-stopped \
   -p 6767:6767 \
@@ -17,30 +15,26 @@ docker run -d --name paseo \
   ghcr.io/pikapeek/paseo:latest
 ```
 
-打开 `http://localhost:6767`，输入 `PASEO_PASSWORD` 连接。
-
-> 用 compose 的话，完整模板见 [`docker-compose.yml`](docker-compose.yml)（所有可选项都已注释）。
+打开 `http://localhost:6767`，输入 `PASEO_PASSWORD`。compose 全功能模板（可选项已注释）见 [`docker-compose.yml`](docker-compose.yml)。
 
 ## 可选工具
 
-在启动命令里加 `-e 变量=值` 即可。每个工具默认关闭，加 `INSTALL_*` 启用，同时配上需要的凭据就能用。
+每个工具默认关闭，在启动命令加对应的 `-e` 变量即可。
 
 ### AI 编程 Agent
 
-| 工具 | 启用 | API key | 模型（可选） | 版本（可选） |
-|------|------|---------|-------------|-------------|
-| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` 主模型；`CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` 三个子槽位 | `CLAUDE_VERSION` |
-| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` 主模型；`CODEX_REVIEW_MODEL` 审查模型 | `CODEX_VERSION` |
-| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` 主模型；`OPENCODE_SMALL_MODEL` 轻量模型 | `OPENCODE_VERSION` |
+| 工具 | 启用 | API key | 模型 | 版本 |
+|------|------|---------|------|------|
+| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL`（+ `CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL`） | `CLAUDE_VERSION` |
+| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL`（+ `CODEX_REVIEW_MODEL`） | `CODEX_VERSION` |
+| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL`（+ `OPENCODE_SMALL_MODEL`） | `OPENCODE_VERSION` |
 
-**自定义 API 端点**：Claude Code 用 `CLAUDE_BASE_URL`，Codex 用 `CODEX_BASE_URL`，OpenCode 用 `OPENCODE_BASE_URL`。默认连官方 API。
-
-**OpenCode 模型格式**：`provider/model`，例如连 DeepSeek 写 `OPENCODE_MODEL=deepseek/deepseek-chat`。用 Anthropic 兼容端点时设 `OPENCODE_PROVIDER=anthropic`。
+默认连官方 API，自定义端点用 `CLAUDE_BASE_URL`/`CODEX_BASE_URL`/`OPENCODE_BASE_URL`。OpenCode 模型用 `provider/model` 格式（`OPENCODE_MODEL=deepseek/deepseek-chat`）；Anthropic 兼容端点设 `OPENCODE_PROVIDER=anthropic`。
 
 ### 开发工具
 
-| 工具 | 启用 | 需要的凭据 | 版本（可选） |
-|------|------|-----------|-------------|
+| 工具 | 启用 | 需要的凭据 | 版本 |
+|------|------|-----------|------|
 | OpenSpec | `INSTALL_OPENSPEC=true` | — | `OPENSPEC_VERSION` |
 | Go | `INSTALL_GO=true` | — | `GO_VERSION` |
 | Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
@@ -48,37 +42,23 @@ docker run -d --name paseo \
 
 不填版本 = 用最新版。
 
-**例子** — 装 Claude Code + Go：
-
-```bash
-docker run -d --name paseo \
-  --restart unless-stopped \
-  -p 6767:6767 \
-  -e PASEO_PASSWORD="change-me" \
-  -e INSTALL_CLAUDE=true \
-  -e CLAUDE_API_KEY="sk-ant-..." \
-  -e INSTALL_GO=true \
-  -v /data/paseo:/home/paseo \
-  ghcr.io/pikapeek/paseo:latest
-```
-
 ## 网络权限（可选）
 
-Agent 有时要搭 VPN、改网络接口或跑 `ping`/`tcpdump`，需要额外给容器开权限。默认关闭，按需开启：
+Agent 搭 VPN、改网络接口或跑 `ping`/`tcpdump` 时需要的权限，默认关闭：
 
 - `cap_add: [NET_ADMIN, NET_RAW]` — 管理路由/防火墙、原始套接字
-- `devices: [/dev/net/tun]` — 建 VPN 隧道（WireGuard / OpenVPN）
-- `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` — 容器内启用 IPv6
+- `devices: [/dev/net/tun]` — VPN 隧道（WireGuard / OpenVPN）
+- `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` — 启用 IPv6
 
-完整写法见 [`docker-compose.yml`](docker-compose.yml)。⚠️ 这些权限会削弱容器隔离，只在确实需要时开启。
+完整写法见 [`docker-compose.yml`](docker-compose.yml)。⚠️ 会削弱容器隔离，仅在需要时开启。
 
 ## GitHub Token
 
-Paseo 克隆仓库要用。在 [GitHub → Settings → Developer settings → Fine-grained tokens](https://github.com/settings/tokens?type=beta) 生成，`Repository access: All repositories` + `Contents: Read-only`，填入 `GITHUB_TOKEN`（需同时 `INSTALL_GH=true`）。
+Paseo 克隆仓库用。在 [GitHub → Settings → Developer settings → Fine-grained tokens](https://github.com/settings/tokens?type=beta) 生成：`Repository access: All repositories` + `Contents: Read-only`。填入 `GITHUB_TOKEN`（配 `INSTALL_GH=true`）。
 
 ## OpenSpec
 
-Spec 驱动开发，`INSTALL_OPENSPEC=true` 启用后，在项目里 `openspec init`，然后在 Claude Code 里用 `/opsx:explore`、`/opsx:propose`、`/opsx:apply`、`/opsx:archive` 走「规划 → 提方案 → 实现 → 归档」流程。
+Spec 驱动开发。`INSTALL_OPENSPEC=true`，在项目里 `openspec init`，然后在 Claude Code 里用 `/opsx:explore`、`/opsx:propose`、`/opsx:apply`、`/opsx:archive`。
 
 ## 其他环境变量
 

@@ -1,14 +1,12 @@
 # Paseo + Optional Tools
 
-[Paseo](https://github.com/getpaseo/paseo) with several AI coding tools pre-integrated. The image starts minimal — just Paseo — and installs whichever tool you need at container startup via an environment variable. Claude Code, Codex, and OpenCode get their API keys and model selection written into their configs automatically, so they work immediately after install.
+[Paseo](https://github.com/getpaseo/paseo) with AI coding tools pre-integrated. Starts with just Paseo; install a tool at container startup via an environment variable. Claude Code, Codex, and OpenCode get their API keys and models configured automatically.
 
 [中文说明](README.zh-CN.md)
 
 ## Quick start
 
 ```bash
-docker pull ghcr.io/pikapeek/paseo:latest
-
 docker run -d --name paseo \
   --restart unless-stopped \
   -p 6767:6767 \
@@ -17,30 +15,26 @@ docker run -d --name paseo \
   ghcr.io/pikapeek/paseo:latest
 ```
 
-Open `http://localhost:6767` and enter `PASEO_PASSWORD` to connect.
-
-> For compose, a full template (every option pre-commented) is at [`docker-compose.yml`](docker-compose.yml).
+Open `http://localhost:6767`, enter `PASEO_PASSWORD`. For compose, a full pre-commented template: [`docker-compose.yml`](docker-compose.yml).
 
 ## Optional tools
 
-Add `-e VARIABLE=value` to your run command. Each tool is off by default; set the matching `INSTALL_*` flag and provide any required credentials.
+Every tool is off by default. Add its `-e` variables to the run command.
 
 ### AI coding agents
 
-| Tool | Enable | API key | Model (optional) | Version (optional) |
-|------|--------|---------|------------------|--------------------|
-| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` main; `CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` sub-slots | `CLAUDE_VERSION` |
-| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` main; `CODEX_REVIEW_MODEL` review | `CODEX_VERSION` |
-| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` main; `OPENCODE_SMALL_MODEL` light | `OPENCODE_VERSION` |
+| Tool | Enable | API key | Model | Version |
+|------|--------|---------|-------|---------|
+| Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` (+ `CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL`) | `CLAUDE_VERSION` |
+| Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` (+ `CODEX_REVIEW_MODEL`) | `CODEX_VERSION` |
+| OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` (+ `OPENCODE_SMALL_MODEL`) | `OPENCODE_VERSION` |
 
-**Custom API endpoint** — Claude Code: `CLAUDE_BASE_URL`, Codex: `CODEX_BASE_URL`, OpenCode: `OPENCODE_BASE_URL`. Defaults to the official APIs.
-
-**OpenCode model format** — `provider/model`, e.g. DeepSeek: `OPENCODE_MODEL=deepseek/deepseek-chat`. For an Anthropic-compatible endpoint set `OPENCODE_PROVIDER=anthropic`.
+Endpoints default to the official APIs — override with `CLAUDE_BASE_URL` / `CODEX_BASE_URL` / `OPENCODE_BASE_URL`. OpenCode models use `provider/model` format (`OPENCODE_MODEL=deepseek/deepseek-chat`); set `OPENCODE_PROVIDER=anthropic` for Anthropic-compatible endpoints.
 
 ### Development tooling
 
-| Tool | Enable | Credential | Version (optional) |
-|------|--------|-----------|--------------------|
+| Tool | Enable | Credential | Version |
+|------|--------|-----------|---------|
 | OpenSpec | `INSTALL_OPENSPEC=true` | — | `OPENSPEC_VERSION` |
 | Go | `INSTALL_GO=true` | — | `GO_VERSION` |
 | Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
@@ -48,37 +42,23 @@ Add `-e VARIABLE=value` to your run command. Each tool is off by default; set th
 
 Unspecified version = latest.
 
-**Example** — Claude Code + Go:
-
-```bash
-docker run -d --name paseo \
-  --restart unless-stopped \
-  -p 6767:6767 \
-  -e PASEO_PASSWORD="change-me" \
-  -e INSTALL_CLAUDE=true \
-  -e CLAUDE_API_KEY="sk-ant-..." \
-  -e INSTALL_GO=true \
-  -v /data/paseo:/home/paseo \
-  ghcr.io/pikapeek/paseo:latest
-```
-
 ## Network permissions (optional)
 
-Agents occasionally need to build VPNs, change network interfaces, or run `ping`/`tcpdump` inside the container. These need extra privileges, disabled by default:
+For agents that build VPNs, change network interfaces, or run `ping`/`tcpdump`. Disabled by default:
 
 - `cap_add: [NET_ADMIN, NET_RAW]` — manage routes/firewall, raw sockets
 - `devices: [/dev/net/tun]` — VPN tunnels (WireGuard / OpenVPN)
-- `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` — enable IPv6 in the container
+- `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` — enable IPv6
 
-Full syntax is in [`docker-compose.yml`](docker-compose.yml). ⚠️ These privileges weaken container isolation — enable only when needed.
+Full syntax in [`docker-compose.yml`](docker-compose.yml). ⚠️ Weakens container isolation — enable only when needed.
 
 ## GitHub Token
 
-Paseo uses this to clone repositories. Create one at [GitHub → Settings → Developer settings → Fine-grained tokens](https://github.com/settings/tokens?type=beta) with `Repository access: All repositories` + `Contents: Read-only`, and set `GITHUB_TOKEN` (with `INSTALL_GH=true`).
+For cloning repositories. Create at [GitHub → Settings → Developer settings → Fine-grained tokens](https://github.com/settings/tokens?type=beta): `Repository access: All repositories` + `Contents: Read-only`. Set `GITHUB_TOKEN` (with `INSTALL_GH=true`).
 
 ## OpenSpec
 
-Spec-driven development. Enable with `INSTALL_OPENSPEC=true`, run `openspec init` in your project, then use `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` in Claude Code for the plan → propose → implement → archive workflow.
+Spec-driven development. `INSTALL_OPENSPEC=true`, run `openspec init`, then use `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` in Claude Code.
 
 ## Other environment variables
 
