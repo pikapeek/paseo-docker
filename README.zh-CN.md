@@ -21,25 +21,32 @@ docker run -d --name paseo \
 
 > 用 compose 的话，完整模板见 [`docker-compose.yml`](docker-compose.yml)（所有可选项都已注释）。
 
-## 启用 AI 工具
+## 可选工具
 
-在启动命令里加 `-e 变量=值` 即可。每个工具默认关闭，加 `INSTALL_*` 启用，同时配上它的 API key 就能用。
+在启动命令里加 `-e 变量=值` 即可。每个工具默认关闭，加 `INSTALL_*` 启用，同时配上需要的凭据就能用。
 
-| 工具 | 启用 | 需要的 Key | 模型（可选） | 版本（可选） |
-|------|------|-----------|-------------|-------------|
+### AI 编程 Agent
+
+| 工具 | 启用 | API key | 模型（可选） | 版本（可选） |
+|------|------|---------|-------------|-------------|
 | Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` 主模型；`CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` 三个子槽位 | `CLAUDE_VERSION` |
 | Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` 主模型；`CODEX_REVIEW_MODEL` 审查模型 | `CODEX_VERSION` |
 | OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` 主模型；`OPENCODE_SMALL_MODEL` 轻量模型 | `OPENCODE_VERSION` |
-| OpenSpec | `INSTALL_OPENSPEC=true` | — | — | `OPENSPEC_VERSION` |
-| Go | `INSTALL_GO=true` | — | — | `GO_VERSION` |
-| Flutter | `INSTALL_FLUTTER=true` | — | — | `FLUTTER_VERSION` |
-| gh（GitHub CLI） | `INSTALL_GH=true` | `GITHUB_TOKEN` | — | — |
-
-不填版本 = 用最新版。
 
 **自定义 API 端点**：Claude Code 用 `CLAUDE_BASE_URL`，Codex 用 `CODEX_BASE_URL`，OpenCode 用 `OPENCODE_BASE_URL`。默认连官方 API。
 
 **OpenCode 模型格式**：`provider/model`，例如连 DeepSeek 写 `OPENCODE_MODEL=deepseek/deepseek-chat`。用 Anthropic 兼容端点时设 `OPENCODE_PROVIDER=anthropic`。
+
+### 开发工具
+
+| 工具 | 启用 | 需要的凭据 | 版本（可选） |
+|------|------|-----------|-------------|
+| OpenSpec | `INSTALL_OPENSPEC=true` | — | `OPENSPEC_VERSION` |
+| Go | `INSTALL_GO=true` | — | `GO_VERSION` |
+| Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
+| gh（GitHub CLI） | `INSTALL_GH=true` | `GITHUB_TOKEN` | — |
+
+不填版本 = 用最新版。
 
 **例子** — 装 Claude Code + Go：
 

@@ -21,25 +21,32 @@ Open `http://localhost:6767` and enter `PASEO_PASSWORD` to connect.
 
 > For compose, a full template (every option pre-commented) is at [`docker-compose.yml`](docker-compose.yml).
 
-## Enable AI tools
+## Optional tools
 
-Add `-e VARIABLE=value` to your run command. Each tool is off by default; set the matching `INSTALL_*` flag and provide its API key.
+Add `-e VARIABLE=value` to your run command. Each tool is off by default; set the matching `INSTALL_*` flag and provide any required credentials.
 
-| Tool | Enable | Key | Model (optional) | Version (optional) |
-|------|--------|-----|------------------|--------------------|
+### AI coding agents
+
+| Tool | Enable | API key | Model (optional) | Version (optional) |
+|------|--------|---------|------------------|--------------------|
 | Claude Code | `INSTALL_CLAUDE=true` | `CLAUDE_API_KEY` | `CLAUDE_MODEL` main; `CLAUDE_OPUS_MODEL`/`CLAUDE_SONNET_MODEL`/`CLAUDE_HAIKU_MODEL` sub-slots | `CLAUDE_VERSION` |
 | Codex | `INSTALL_CODEX=true` | `CODEX_API_KEY` | `CODEX_MODEL` main; `CODEX_REVIEW_MODEL` review | `CODEX_VERSION` |
 | OpenCode | `INSTALL_OPENCODE=true` | `OPENCODE_API_KEY` | `OPENCODE_MODEL` main; `OPENCODE_SMALL_MODEL` light | `OPENCODE_VERSION` |
-| OpenSpec | `INSTALL_OPENSPEC=true` | — | — | `OPENSPEC_VERSION` |
-| Go | `INSTALL_GO=true` | — | — | `GO_VERSION` |
-| Flutter | `INSTALL_FLUTTER=true` | — | — | `FLUTTER_VERSION` |
-| gh (GitHub CLI) | `INSTALL_GH=true` | `GITHUB_TOKEN` | — | — |
-
-Unspecified version = latest.
 
 **Custom API endpoint** — Claude Code: `CLAUDE_BASE_URL`, Codex: `CODEX_BASE_URL`, OpenCode: `OPENCODE_BASE_URL`. Defaults to the official APIs.
 
 **OpenCode model format** — `provider/model`, e.g. DeepSeek: `OPENCODE_MODEL=deepseek/deepseek-chat`. For an Anthropic-compatible endpoint set `OPENCODE_PROVIDER=anthropic`.
+
+### Development tooling
+
+| Tool | Enable | Credential | Version (optional) |
+|------|--------|-----------|--------------------|
+| OpenSpec | `INSTALL_OPENSPEC=true` | — | `OPENSPEC_VERSION` |
+| Go | `INSTALL_GO=true` | — | `GO_VERSION` |
+| Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
+| gh (GitHub CLI) | `INSTALL_GH=true` | `GITHUB_TOKEN` | — |
+
+Unspecified version = latest.
 
 **Example** — Claude Code + Go:
 
