@@ -38,6 +38,23 @@ bad() { echo "  [optional] $1 -> FAILED (continuing): $2" >&2; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# Retry a command up to 3 times with exponential backoff.
+# Usage: retry <label> <cmd...>
+# Exits with the command's final exit code.
+retry() {
+  local label="$1"; shift
+  local attempt=1 delay=2 max_attempts=3
+  while ! "$@" 2>/dev/null; do
+    if (( attempt >= max_attempts )); then
+      return 1
+    fi
+    echo "  [optional] ${label} attempt ${attempt}/${max_attempts} failed, retrying in ${delay}s..." >&2
+    sleep "$delay"
+    (( attempt++, delay*=2 ))
+  done
+  return 0
+}
+
 # Make a file/dir owned by the paseo user (when running as root).
 own_as_paseo() { chown -R "${PASEO_UID}:${PASEO_GID}" "$1" 2>/dev/null || true; }
 
@@ -61,10 +78,10 @@ install_npm_tool() { # $1=flag $2=binary $3=package $4=version
   fi
   spec="$pkg@$ver"
   inf "installing $spec via npm (global, as root)..."
-  if npm install -g "${NPM_ARGS[@]}" "$spec" >/dev/null; then
+  if retry "$bin" npm install -g "${NPM_ARGS[@]}" "$spec"; then
     ok "$bin" "$("$bin" --version 2>/dev/null | head -1)"
   else
-    bad "$bin" "npm install returned non-zero"
+    bad "$bin" "npm install returned non-zero after 3 attempts"
   fi
 }
 
@@ -86,9 +103,9 @@ install_go() {
   # Resolve latest stable version from go.dev when "latest"
   if [[ "$ver" == "latest" ]]; then
     local releases
-    releases="$(curl -fsSL "https://go.dev/dl/?mode=json" 2>/dev/null || true)"
+    releases="$(retry "go-version-lookup" curl -fsSL "https://go.dev/dl/?mode=json" || true)"
     if [[ -z "$releases" ]]; then
-      bad go "failed to resolve latest version from go.dev"; return 1
+      bad go "failed to resolve latest version from go.dev after 3 attempts"; return 1
     fi
     ver="$(echo "$releases" | python3 -c "
 import json,sys
@@ -114,8 +131,8 @@ for r in data:
   local url="https://go.dev/dl/go${ver}.linux-${arch}.tar.gz"
   local tmp; tmp="$(mktemp -d)"
   inf "downloading ${url} ..."
-  if ! curl -fsSL "$url" -o "$tmp/go.tgz"; then
-    bad go "download failed: $url"; rm -rf "$tmp"; return 1
+  if ! retry "go-download" curl -fsSL "$url" -o "$tmp/go.tgz"; then
+    bad go "download failed: $url (3 attempts)"; rm -rf "$tmp"; return 1
   fi
   inf "extracting to $go_root ..."
   rm -rf "$go_root"
@@ -144,9 +161,9 @@ install_flutter() {
   if [[ "$ver" == "latest" ]]; then
     # Resolve the latest stable release from the official index.
     local releases
-    releases="$(curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json" 2>/dev/null || true)"
+    releases="$(retry "flutter-version-lookup" curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json" || true)"
     if [[ -z "$releases" ]]; then
-      bad flutter "failed to resolve latest version"; return 1
+      bad flutter "failed to resolve latest version after 3 attempts"; return 1
     fi
     # Releases are newest-first; take the first entry whose channel is stable.
     ver="$(echo "$releases" | python3 -c "
@@ -163,8 +180,8 @@ for r in d['releases']:
   url="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${ver}-stable.tar.xz"
   local tmp; tmp="$(mktemp -d)"
   inf "downloading ${url} ..."
-  if ! curl -fsSL "$url" -o "$tmp/flutter.tar.xz"; then
-    bad flutter "download failed: $url"; rm -rf "$tmp"; return 1
+  if ! retry "flutter-download" curl -fsSL "$url" -o "$tmp/flutter.tar.xz"; then
+    bad flutter "download failed: $url (3 attempts)"; rm -rf "$tmp"; return 1
   fi
   inf "extracting to $flutter_root ..."
   rm -rf "$flutter_root"
@@ -187,11 +204,11 @@ install_gh() {
   [[ "${INSTALL_GH:-}" == "true" || "${INSTALL_GH:-}" == "1" ]] || return 0
   have gh && { ok gh "already installed (skipped)"; return 0; }
   inf "installing gh via apt-get (as root)..."
-  if apt-get update >/dev/null && \
-     apt-get install -y --no-install-recommends gh >/dev/null; then
+  if retry "gh" apt-get update && \
+     retry "gh" apt-get install -y --no-install-recommends gh; then
     ok gh "$(gh --version 2>/dev/null | head -1)"
   else
-    bad gh "apt-get install returned non-zero"
+    bad gh "apt-get install returned non-zero after 3 attempts"
   fi
 }
 
@@ -327,14 +344,20 @@ configure_opencode() {
 }
 
 # ---- main ----
-install_npm_tool "${INSTALL_CLAUDE:-}"   claude    @anthropic-ai/claude-code "${CLAUDE_VERSION:-latest}"
-install_npm_tool "${INSTALL_OPENSPEC:-}" openspec  @fission-ai/openspec      "${OPENSPEC_VERSION:-latest}"
-install_npm_tool "${INSTALL_CODEX:-}"    codex     @openai/codex             "${CODEX_VERSION:-latest}"
-install_npm_tool "${INSTALL_OPENCODE:-}" opencode  opencode-ai               "${OPENCODE_VERSION:-latest}"
-install_go
-install_flutter
-install_gh
+# All installs run in parallel; each is independently gated by its
+# INSTALL_* flag. API configs run sequentially AFTER all installs finish
+# (they depend on binaries being present).
 
+install_npm_tool "${INSTALL_CLAUDE:-}"   claude    @anthropic-ai/claude-code "${CLAUDE_VERSION:-latest}" &
+install_npm_tool "${INSTALL_OPENSPEC:-}" openspec  @fission-ai/openspec      "${OPENSPEC_VERSION:-latest}" &
+install_npm_tool "${INSTALL_CODEX:-}"    codex     @openai/codex             "${CODEX_VERSION:-latest}" &
+install_npm_tool "${INSTALL_OPENCODE:-}" opencode  opencode-ai               "${OPENCODE_VERSION:-latest}" &
+install_go &
+install_flutter &
+install_gh &
+wait
+
+# API configs must run after binaries are installed.
 configure_claude
 configure_codex
 configure_opencode

@@ -17,11 +17,12 @@ echo "=============================================="
 echo "  Paseo (pikapeek) — optional tools"
 echo "=============================================="
 
-# Optional-tool installs run as root, BEFORE the gosu drop. Tools that fail
-# to install are logged and skipped; boot always continues.
+# Optional-tool installs run asynchronously in the background so Paseo
+# starts immediately. Tools that fail are logged; boot never blocks.
+# Progress: docker exec paseo tail -f /home/paseo/install-optionals.log
 if [[ -x /usr/local/bin/install-optionals.sh ]]; then
-  /usr/local/bin/install-optionals.sh || \
-    echo "  [optional] one or more tools failed to install (see above)"
+  nohup /usr/local/bin/install-optionals.sh > /home/paseo/install-optionals.log 2>&1 &
+  echo "  [optional] tools installing in background (tail /home/paseo/install-optionals.log)"
 fi
 
 # Propagate Go env to the daemon process (gosu does NOT source profile.d).
