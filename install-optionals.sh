@@ -166,6 +166,7 @@ configure_codex() {
   local key="${CODEX_API_KEY:-}"
   local base="${CODEX_BASE_URL:-}"
   local model="${CODEX_MODEL:-}"
+  local review="${CODEX_REVIEW_MODEL:-}"
   [[ -n "$key" ]] || return 0
   mkdir -p "$dir"
   # Default to official OpenAI endpoint when no custom base URL is set.
@@ -178,6 +179,9 @@ model_provider = "custom"
 EOF
     if [[ -n "$model" ]]; then
       echo "model = \"${model}\""
+    fi
+    if [[ -n "$review" ]]; then
+      echo "review_model = \"${review}\""
     fi
     cat <<EOF
 
@@ -205,6 +209,7 @@ configure_opencode() {
   local key="${OPENCODE_API_KEY:-}"
   local base="${OPENCODE_BASE_URL:-}"
   local model="${OPENCODE_MODEL:-}"
+  local small="${OPENCODE_SMALL_MODEL:-}"
   local provider="${OPENCODE_PROVIDER:-openai}"
   [[ -n "$key" ]] || return 0
   mkdir -p "$data"
@@ -227,6 +232,9 @@ configure_opencode() {
     printf '{\n'
     if [[ -n "$model" ]]; then
       printf '  "model": "%s",\n' "$model"
+    fi
+    if [[ -n "$small" ]]; then
+      printf '  "small_model": "%s",\n' "$small"
     fi
     printf '  "provider": {\n    "%s": {\n' "$provider"
     if [[ -n "$base" ]]; then
