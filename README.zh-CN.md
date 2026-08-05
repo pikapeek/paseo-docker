@@ -36,6 +36,34 @@ Dashboard: `http://localhost:6767` — Web UI 连接时输入 `PASEO_PASSWORD`�
 
 要安装工具，只要在下表对应的 `-e` / `environment` 项加上 `INSTALL_*` 标志（及 API / 模型变量）即可。
 
+完整功能模板（所有可选项都已注释）见 [`docker-compose.yml`](docker-compose.yml)。
+
+## Linux 权限
+
+vibe coding 的 agent 有时需要底层网络访问——搭建 VPN、调整网络接口，或在容器内运行 `ip`/`iptables`/`ping`/`tcpdump`。这些是**可选的**，默认关闭，按需开启即可。
+
+| Compose 选项 | 授予的权限 | 用途示例 |
+|----------------|-----------|---------|
+| `cap_add: [NET_ADMIN]` | 管理路由、防火墙、网络接口 | VPN 搭建、`ip` / `iptables` |
+| `cap_add: [NET_RAW]` | 原始套接字 | `ping`、`tcpdump`、自定义数据包 |
+| `devices: [/dev/net/tun]` | `/dev/net/tun` 设备 | WireGuard / OpenVPN 隧道 |
+| `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` | 容器内启用 IPv6 | 需要 IPv6 的网络栈 |
+
+**Docker CLI 等价命令**（`--cap-add`、`--device`、`--sysctl`）：
+
+```bash
+docker run -d --name paseo \
+  --cap-add=NET_ADMIN --cap-add=NET_RAW \
+  --device=/dev/net/tun \
+  --sysctl net.ipv6.conf.all.disable_ipv6=0 \
+  --sysctl net.ipv6.conf.default.disable_ipv6=0 \
+  -p 6767:6767 \
+  -e PASEO_PASSWORD="change-me" \
+  ghcr.io/pikapeek/paseo:latest
+```
+
+> ⚠️ 这些权限会削弱容器的隔离性。仅在 agent 确实需要网络控制时使用，并把容器视为可信环境。
+
 ## 可选工具
 
 工具**默认都不安装**，按需开启。每个工具用 `INSTALL_*` 变量启用，可用对应的版本变量锁定版本（不指定则用最新版）。安装在**容器启动时、以 root 身份**执行，之后 daemon 会降权到 `paseo` 用户。安装是幂等的：已安装的工具在后续重启时会跳过。某个工具安装失败只会打日志跳过，不影响 daemon 启动。

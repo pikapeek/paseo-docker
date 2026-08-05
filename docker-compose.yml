@@ -1,0 +1,77 @@
+# ============================================================
+# Paseo + Optional Tools — full-featured docker compose template
+#
+# Everything marked (optional) is commented out. Uncomment the
+# tools / capabilities you need. See README.md for the full
+# variable reference.
+# ============================================================
+
+services:
+  paseo:
+    image: ghcr.io/pikapeek/paseo:latest
+    container_name: paseo
+    restart: unless-stopped
+
+    ports:
+      - "6767:6767"                # Paseo dashboard / daemon
+
+    # ---- Linux capabilities (optional) ----
+    # Needed by vibe-coding agents that build VPNs, manage network
+    # interfaces, or run `ip`/`iptables`. Only grant what you need.
+    # See README "Linux Capabilities" section.
+    # cap_add:
+    #   - NET_ADMIN                 # manage routes / firewall / network interfaces
+    #   - NET_RAW                   # raw sockets (ping, tcpdump, custom packets)
+
+    # ---- TUN device (optional) ----
+    # /dev/net/tun lets agents create VPN tunnels (wireguard, openvpn...).
+    # devices:
+    #   - /dev/net/tun
+
+    # ---- IPv6 sysctls (optional) ----
+    # Enables IPv6 inside the container (some VPN/network stacks need it).
+    # sysctls:
+    #   - net.ipv6.conf.all.disable_ipv6=0
+    #   - net.ipv6.conf.default.disable_ipv6=0
+
+    environment:
+      - PASEO_PASSWORD=change-me   # REQUIRED — daemon auth password
+
+      # ---- Optional tools: install at startup ----
+      # Uncomment any tool you want. Uncomment its *_API_KEY / *_BASE_URL /
+      # *_MODEL vars below too, or it installs but stays unconfigured.
+      #
+      # - INSTALL_CLAUDE=true            # Claude Code
+      # - CLAUDE_API_KEY=your-key
+      # - CLAUDE_BASE_URL=https://your-api.example.com
+      # - CLAUDE_MODEL=                  # main model
+      # - CLAUDE_OPUS_MODEL=             # opus alias
+      # - CLAUDE_SONNET_MODEL=           # sonnet alias
+      # - CLAUDE_HAIKU_MODEL=            # haiku alias
+      #
+      # - INSTALL_OPENSPEC=true          # OpenSpec (spec-driven dev)
+      #
+      # - INSTALL_CODEX=true             # OpenAI Codex
+      # - CODEX_API_KEY=sk-codex-xxx
+      # - CODEX_BASE_URL=https://your-codex-api.example.com/v1
+      # - CODEX_MODEL=                   # main model
+      # - CODEX_REVIEW_MODEL=            # /review model
+      #
+      # - INSTALL_OPENCODE=true          # OpenCode
+      # - OPENCODE_API_KEY=sk-opencode-xxx
+      # - OPENCODE_BASE_URL=https://your-opencode-api.example.com
+      # - OPENCODE_MODEL=                # main model (provider/model)
+      # - OPENCODE_SMALL_MODEL=          # small model (provider/model)
+      # - OPENCODE_PROVIDER=openai       # openai | anthropic
+      #
+      # - INSTALL_GO=true                # Go toolchain
+      # - GO_VERSION=1.26.5
+      #
+      # - INSTALL_FLUTTER=true           # Flutter SDK
+      # - FLUTTER_VERSION=latest
+      #
+      # - INSTALL_GH=true                # GitHub CLI (for GITHUB_TOKEN clone)
+      # - GITHUB_TOKEN=ghp_xxx
+
+    volumes:
+      - /data/paseo:/home/paseo    # paseo home (configs, tools persist here)

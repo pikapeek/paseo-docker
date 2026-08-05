@@ -36,6 +36,39 @@ Dashboard: `http://localhost:6767` — enter `PASEO_PASSWORD` in the web UI to c
 
 Install a tool by adding its `INSTALL_*` flag (and API/model vars) as extra `-e` / `environment` entries — see the table below.
 
+A full-featured template with everything pre-commented is provided at [`docker-compose.yml`](docker-compose.yml).
+
+## Linux Capabilities
+
+Vibe-coding agents sometimes need low-level network access — building a VPN,
+tuning network interfaces, or running `ip`/`iptables`/`ping`/`tcpdump` inside
+the container. These are **optional** and disabled by default; grant only what
+your workload needs.
+
+| Compose option | Grants | Example use |
+|----------------|--------|-------------|
+| `cap_add: [NET_ADMIN]` | Manage routes, firewall, network interfaces | VPN setup, `ip` / `iptables` |
+| `cap_add: [NET_RAW]` | Raw sockets | `ping`, `tcpdump`, custom packets |
+| `devices: [/dev/net/tun]` | `/dev/net/tun` device | WireGuard / OpenVPN tunnels |
+| `sysctls: [net.ipv6.conf.*.disable_ipv6=0]` | Enable IPv6 in the container | Network stacks that require IPv6 |
+
+**Docker CLI equivalent** (`--cap-add`, `--device`, `--sysctl`):
+
+```bash
+docker run -d --name paseo \
+  --cap-add=NET_ADMIN --cap-add=NET_RAW \
+  --device=/dev/net/tun \
+  --sysctl net.ipv6.conf.all.disable_ipv6=0 \
+  --sysctl net.ipv6.conf.default.disable_ipv6=0 \
+  -p 6767:6767 \
+  -e PASEO_PASSWORD="change-me" \
+  ghcr.io/pikapeek/paseo:latest
+```
+
+> ⚠️ These capabilities weaken the container's isolation. Use them only when
+> the agent genuinely needs network control, and treat the container as
+> trusted.
+
 ## Optional Tools
 
 Tools are **off by default** — install only what you need. Each is enabled by
