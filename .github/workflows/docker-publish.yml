@@ -7,11 +7,6 @@ on:
         description: 'Paseo 版本（留空 = 自动取最新 release）'
         required: false
         default: ''
-      force_rebuild:
-        description: '跳过去重检查，强制构建'
-        required: false
-        default: false
-        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -19,7 +14,7 @@ env:
 
 jobs:
   publish:
-    name: Build → Push → Summary
+    name: Build & Push
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -27,9 +22,6 @@ jobs:
       packages: write
 
     steps:
-      # ============================================================
-      # Phase 1: 检出 + 确定 Paseo 版本
-      # ============================================================
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -38,33 +30,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo '::group::解析 Paseo 版本'
           MANUAL='${{ github.event.inputs.paseo_version }}'
 
           if [[ -n "${MANUAL}" ]]; then
             VER="${MANUAL}"
             echo "::notice::手动指定: ${VER}"
           else
-            echo '  → 查询 GitHub API: getpaseo/paseo/releases/latest'
+            echo '→ 查询 getpaseo/paseo/releases/latest'
             JSON="$(curl -sSf --retry 2 --connect-timeout 15 \
               -H 'Accept: application/vnd.github+json' \
               -H 'X-GitHub-Api-Version: 2022-11-28' \
               'https://api.github.com/repos/getpaseo/paseo/releases/latest')"
             VER="$(echo "${JSON}" | jq -r '.tag_name')"
-            if [[ -z "${VER}" || "${VER}" == 'null' ]]; then
-              echo '::error::无法获取 Paseo 最新版本'
-              exit 1
-            fi
-            echo "  → 最新 release: ${VER}"
+            [[ -z "${VER}" || "${VER}" == 'null' ]] && { echo '::error::无法获取 Paseo 版本'; exit 1; }
+            echo "→ 最新: ${VER}"
           fi
-
           echo "version=${VER}" >> "${GITHUB_OUTPUT}"
-          echo "::endgroup::"
           echo "::notice title=Paseo version::${VER}"
 
-      # ============================================================
-      # Phase 2: 去重检查 — 目标镜像标签已存在则跳过
-      # ============================================================
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -72,50 +55,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check if build needed
-        id: check
-        shell: bash
-        run: |
-          set -euo pipefail
-          VER='${{ steps.version.outputs.version }}'
-          FORCE='${{ github.event.inputs.force_rebuild }}'
-          TAG="${REGISTRY}/${IMAGE}:${VER}"
-          echo "version=${VER}" >> "${GITHUB_OUTPUT}"
-
-          if [[ "${FORCE}" == 'true' ]]; then
-            echo '::warning::强制重建，跳过去重检查'
-            echo 'should_build=true' >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-
-          echo "  → 检查镜像是否存在: ${TAG}"
-          if docker manifest inspect "${TAG}" &>/dev/null; then
-            echo "::notice::镜像已存在，跳过构建 — ${TAG}"
-            echo 'should_build=false' >> "${GITHUB_OUTPUT}"
-          else
-            echo "::notice::将发布新镜像 — ${TAG}"
-            echo 'should_build=true' >> "${GITHUB_OUTPUT}"
-          fi
-
-      # ============================================================
-      # Phase 3: 构建 + 推送
-      # ============================================================
       - name: Setup Buildx
-        if: steps.check.outputs.should_build == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Generate image tags
-        if: steps.check.outputs.should_build == 'true'
+      - name: Generate tags
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
           tags: |
-            type=raw,value=${{ steps.check.outputs.version }}
+            type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=latest
 
       - name: Build & Push
-        if: steps.check.outputs.should_build == 'true'
         id: build
         uses: docker/build-push-action@v6
         with:
@@ -127,41 +79,18 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-      # ============================================================
-      # Phase 4: 汇总
-      # ============================================================
       - name: Summary
         if: always()
         shell: bash
         run: |
           VER='${{ steps.version.outputs.version }}'
-          BUILD='${{ steps.check.outputs.should_build }}'
           FULL="${REGISTRY}/${IMAGE}"
-
-          echo '---'
-
-          if [[ "${BUILD}" == 'true' ]]; then
-            ICON='🚀' STATUS='已发布'
-            DIGEST='${{ steps.build.outputs.digest }}'
-          else
-            ICON='⚡' STATUS='已跳过（镜像已存在）'
-            DIGEST='—'
-          fi
-
           cat <<EOF >> "${GITHUB_STEP_SUMMARY}"
-          ## ${ICON} ${STATUS}
+          ## 🚀 已发布
 
           | | |
           |---|---|
           | **镜像** | \`${FULL}\` |
           | **Paseo** | \`${VER}\` |
-          | **Tag** | \`${FULL}:${VER}\` |
-          | **Digest** | \`${DIGEST}\` |
-          | **触发方式** | ${{ github.event_name }} |
+          | **拉取** | \`docker pull ${FULL}:${VER}\` |
           EOF
-
-          if [[ "${BUILD}" == 'true' ]]; then
-            echo "  → 拉取: docker pull ${FULL}:${VER}"
-          else
-            echo "  → 拉取: docker pull ${FULL}:${VER}"
-          fi
