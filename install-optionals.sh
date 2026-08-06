@@ -205,9 +205,12 @@ install_gh() {
   local deb_url="https://github.com/cli/cli/releases/download/v${ver}/gh_${ver}_linux_amd64.deb"
   local tmp; tmp="$(mktemp -d)"
   curl_dl "$deb_url" "$tmp/gh.deb" "gh" || { rm -rf "$tmp"; return 1; }
-  timeout 60 dpkg -i "$tmp/gh.deb" 2>/dev/null || { rm -rf "$tmp"; return 1; }
+  dpkg -i "$tmp/gh.deb" 2>/dev/null; local ret=$?
   rm -rf "$tmp"
-  gh --version 2>/dev/null | head -1
+  # dpkg often returns non-zero for non-fatal warnings; binary exists = success
+  have gh && { gh --version 2>/dev/null | head -1; return 0; }
+  echo "  [gh] dpkg 安装失败 (退出码: $ret)" >&2
+  return 1
 }
 
 # ---- API config functions ----
