@@ -38,11 +38,24 @@ Endpoints default to the official APIs — override with `CLAUDE_BASE_URL` / `CO
 | Tool | Enable | Credential | Version |
 |------|--------|-----------|---------|
 | OpenSpec | `INSTALL_OPENSPEC=true` | — | `OPENSPEC_VERSION` |
+| Python | `INSTALL_PYTHON=true` | — | — |
 | Go | `INSTALL_GO=true` | — | `GO_VERSION` |
 | Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
 | gh (GitHub CLI) | `INSTALL_GH=true` | `GITHUB_TOKEN` | — |
 
 Unspecified version = latest.
+
+## Mirror / Proxy
+
+Override download sources for restricted networks:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NPM_REGISTRY` | npm registry URL | `https://registry.npmjs.org` |
+| `GO_MIRROR_URL` | Go download base (e.g. `https://mirrors.ustc.edu.cn/golang`) | `https://go.dev/dl` |
+| `FLUTTER_MIRROR` | Flutter download base (e.g. `https://storage.flutter-io.cn`) | `https://storage.googleapis.com` |
+| `GH_MIRROR_URL` | gh .deb download base (e.g. `https://mirror.ghproxy.com/https://github.com`) | `https://github.com` |
+| `DOWNLOAD_PROXY` | curl download proxy, supports HTTP/SOCKS5 (e.g. `socks5://127.0.0.1:1080`) | — |
 
 ## Network permissions (optional)
 

@@ -77,6 +77,8 @@ services:
       # - OPENCODE_SMALL_MODEL=          # small model (provider/model)
       # - OPENCODE_PROVIDER=openai       # openai | anthropic
       #
+      # - INSTALL_PYTHON=true            # Python 3 + pip
+      #
       # - INSTALL_GO=true                # Go toolchain
       # - GO_VERSION=1.26.5
       #
@@ -85,6 +87,14 @@ services:
       #
       # - INSTALL_GH=true                # GitHub CLI (for GITHUB_TOKEN clone)
       # - GITHUB_TOKEN=ghp_xxx
+      #
+      # ---- Mirror / proxy (optional) ----
+      # Replace download sources for restricted networks.
+      # - NPM_REGISTRY=https://registry.npmmirror.com
+      # - GO_MIRROR_URL=https://mirrors.ustc.edu.cn/golang
+      # - FLUTTER_MIRROR=https://storage.flutter-io.cn
+      # - GH_MIRROR_URL=https://mirror.ghproxy.com/https://github.com
+      # - DOWNLOAD_PROXY=socks5://proxy:1080
 
     volumes:
       - /data/paseo:/home/paseo    # paseo home (configs, tools persist here)

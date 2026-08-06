@@ -16,6 +16,7 @@ ENV INSTALL_CLAUDE=""
 ENV INSTALL_OPENSPEC=""
 ENV INSTALL_CODEX=""
 ENV INSTALL_OPENCODE=""
+ENV INSTALL_PYTHON=""
 ENV INSTALL_GO=""
 ENV INSTALL_FLUTTER=""
 ENV INSTALL_GH=""
@@ -54,7 +55,7 @@ COPY docker-entrypoint.sh /usr/local/bin/paseo-cc-entrypoint.sh
 COPY install-optionals.sh /usr/local/bin/install-optionals.sh
 # sudo needed for paseo user agents (install pkgs, manage network, etc.)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends sudo && \
+    apt-get install -y --no-install-recommends sudo xz-utils && \
     rm -rf /var/lib/apt/lists/* && \
     echo "paseo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/paseo && \
     chmod 440 /etc/sudoers.d/paseo && \

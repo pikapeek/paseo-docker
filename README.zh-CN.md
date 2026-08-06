@@ -38,11 +38,24 @@ docker run -d --name paseo \
 | 工具 | 启用 | 需要的凭据 | 版本 |
 |------|------|-----------|------|
 | OpenSpec | `INSTALL_OPENSPEC=true` | — | `OPENSPEC_VERSION` |
+| Python | `INSTALL_PYTHON=true` | — | — |
 | Go | `INSTALL_GO=true` | — | `GO_VERSION` |
 | Flutter | `INSTALL_FLUTTER=true` | — | `FLUTTER_VERSION` |
 | gh（GitHub CLI） | `INSTALL_GH=true` | `GITHUB_TOKEN` | — |
 
 不填版本 = 用最新版。
+
+## 镜像源 / 代理
+
+下载工具包时，可通过以下环境变量替换为国内镜像或代理：
+
+| 变量 | 说明 | 默认 |
+|------|------|------|
+| `NPM_REGISTRY` | npm registry 地址 | `https://registry.npmjs.org` |
+| `GO_MIRROR_URL` | Go 下载基础 URL（如 `https://mirrors.ustc.edu.cn/golang`） | `https://go.dev/dl` |
+| `FLUTTER_MIRROR` | Flutter 下载基础 URL（如 `https://storage.flutter-io.cn`） | `https://storage.googleapis.com` |
+| `GH_MIRROR_URL` | gh .deb 下载基础 URL（如 `https://mirror.ghproxy.com/https://github.com`） | `https://github.com` |
+| `DOWNLOAD_PROXY` | curl 下载代理，支持 HTTP/SOCKS5（如 `socks5://127.0.0.1:1080`） | — |
 
 ## 网络权限
 
