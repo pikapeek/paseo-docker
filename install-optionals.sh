@@ -376,14 +376,6 @@ for i in "${!TOOL_LABEL[@]}"; do
   SUMMARY_TOTAL=$((SUMMARY_TOTAL+1))
 done
 
-# ---- API configs ----
-echo "=============================================="
-echo "  API 配置"
-echo "=============================================="
-configure_claude
-configure_codex
-configure_opencode
-
 # ---- Summary ----
 dt=$((SECONDS-OVERALL_START_SEC))
 echo ""
